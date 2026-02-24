@@ -372,107 +372,34 @@ function computeAnalytics(
 // CSS
 // ═══════════════════════════════════════════════════════════════════════
 const snowCSS = `
-/* ── Mermaid Iridescence — LIGHT ── */
-@keyframes shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-@keyframes borderGlow {
-  0%, 100% { border-color: rgba(14, 165, 233, 0.15); box-shadow: 0 4px 30px rgba(14,165,233,0.06), 0 0 0 1px rgba(34,211,238,0.08); }
-  50% { border-color: rgba(14, 165, 233, 0.28); box-shadow: 0 4px 30px rgba(14,165,233,0.12), 0 0 0 1px rgba(34,211,238,0.15); }
-}
-@keyframes snowfall {
-  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) translateX(20px) rotate(360deg); opacity: 0; }
-}
-.snowflake { position: fixed; top: -2vh; color: #0ea5e9; pointer-events: none; z-index: 9999; opacity: 0.18; animation: snowfall linear infinite; }
-.snowflake:nth-child(1){left:5%;animation-duration:14s;font-size:8px}
-.snowflake:nth-child(2){left:18%;animation-duration:18s;animation-delay:2s;font-size:11px;color:#c4b5fd}
-.snowflake:nth-child(3){left:35%;animation-duration:15s;animation-delay:4s;font-size:6px;color:#5eead4}
-.snowflake:nth-child(4){left:55%;animation-duration:13s;animation-delay:1s;font-size:9px}
-.snowflake:nth-child(5){left:75%;animation-duration:17s;animation-delay:3s;font-size:7px;color:#5eead4}
-.snowflake:nth-child(6){left:90%;animation-duration:16s;animation-delay:5s;font-size:10px;color:#c4b5fd}
-
-.glass {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(14, 165, 233, 0.15);
-  box-shadow: 0 4px 30px rgba(14, 165, 233, 0.08), 0 0 0 1px rgba(34, 211, 238, 0.06);
-  animation: borderGlow 6s ease infinite;
-}
-.glass-dark {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(14, 165, 233, 0.12);
-  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.06);
-}
-.glass-iridescent {
-  background: linear-gradient(135deg, rgba(236,254,255,0.9), rgba(240,244,255,0.85), rgba(240,253,250,0.88));
-  background-size: 300% 300%;
-  animation: shimmer 6s ease infinite;
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  box-shadow: 0 4px 30px rgba(14, 165, 233, 0.1), 0 0 0 1px rgba(34, 211, 238, 0.08);
-}
+/* ── Clean Design System — NO glass, NO blur, NO transparency ── */
+.snow-panel { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.snow-panel-dark { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; }
+.snow-btn { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; font-size: 13px; padding: 8px 16px; cursor: pointer; transition: all 0.15s; }
+.snow-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+.snow-btn-active { background: #0369a1; border-color: #0369a1; color: #ffffff; }
+.snow-next { background: #0369a1; color: white; border: none; border-radius: 12px; padding: 16px 48px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.snow-next:hover { background: #075985; }
 
 .slide-up { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
 @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .fade-in { animation: fadeIn 0.4s ease forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.insight-card { border-left: 3px solid; padding: 8px 12px; border-radius: 0 8px 8px 0; margin-bottom: 6px; background: rgba(236,254,255,0.5); }
-.insight-card p { color: #334155; }
+.insight-card { border-left: 3px solid; padding: 8px 12px; border-radius: 0 8px 8px 0; margin-bottom: 6px; background: #f8fafc; }
+.insight-card p { color: #475569; }
 .insight-card strong { color: #0f172a; }
 
 .hero-overlay { position: absolute; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; }
-.hero-bg {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(14,165,233,0.12), transparent 50%),
-    radial-gradient(ellipse at 70% 80%, rgba(196,181,253,0.1), transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(94,234,212,0.08), transparent 60%),
-    linear-gradient(180deg, #ecfeff, #f0f9ff, #f8fafc);
-}
-@keyframes heroShimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-.hero-title-shimmer {
-  background: linear-gradient(135deg, #0ea5e9, #0d9488, #7c3aed, #0ea5e9);
-  background-size: 300% 300%;
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-  animation: heroShimmer 6s ease infinite;
-}
+.hero-bg { position: absolute; inset: 0; background: linear-gradient(180deg, #f8fafc, #e0f2fe, #f8fafc); }
 .hero-enter { animation: heroFadeIn 1s ease forwards; }
 @keyframes heroFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .hero-exit { animation: heroFadeOut 0.6s ease forwards; }
 @keyframes heroFadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
-.pulse-arrow { animation: pulseArrow 2s ease-in-out infinite; color: #0ea5e9; }
-@keyframes pulseArrow { 0%,100% { transform: translateY(0); opacity: 0.3; } 50% { transform: translateY(8px); opacity: 0.8; } }
-.story-next { animation: fadeIn 0.6s ease 0.3s both; }
 
-.btn-iridescent {
-  background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(34,211,238,0.1), rgba(196,181,253,0.08));
-  background-size: 200% 200%;
-  border: 1px solid rgba(14,165,233,0.25);
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(14,165,233,0.08);
-  color: #0c4a6e;
-}
-.btn-iridescent:hover {
-  animation: shimmer 3s ease infinite;
-  border-color: rgba(14,165,233,0.4);
-  box-shadow: 0 4px 30px rgba(14,165,233,0.15);
-  color: #0369a1;
-}
-.tab-active {
-  background: linear-gradient(135deg, #0ea5e9, #0891b2);
-  color: #fff;
-  box-shadow: 0 2px 12px rgba(14,165,233,0.25);
-  border: none;
-}
-.tab-inactive { color: #64748b; }
-.tab-inactive:hover { color: #0c4a6e; background: rgba(14,165,233,0.06); }
+.tab-active { background: #0369a1; color: #fff; border: none; }
+.tab-inactive { color: #475569; }
+.tab-inactive:hover { color: #0f172a; background: #f1f5f9; }
 `
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -509,13 +436,13 @@ function StationInsightsPanel({
     <div className="space-y-3">
       {/* ─── CURRENT CONDITIONS ─── */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.12)' }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(3,105,161,0.06)', border: '1px solid rgba(3,105,161,0.1)' }}>
           <div className="text-2xl font-bold" style={{ color: '#0891b2' }}>
             {station.swe !== null ? `${station.swe}"` : 'N/A'}
           </div>
           <div className="text-[10px] mt-0.5" style={{ color: '#64748b' }}>Current SWE</div>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.12)' }}>
+        <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(3,105,161,0.06)', border: '1px solid rgba(3,105,161,0.1)' }}>
           <div className="text-2xl font-bold" style={{ color: getSnotelColor(station.pctMedian) }}>
             {station.pctMedian !== null ? `${station.pctMedian}%` : 'N/A'}
           </div>
@@ -526,7 +453,7 @@ function StationInsightsPanel({
       {/* ─── NARRATIVE INSIGHTS ─── */}
       {analyticsLoading ? (
         <div className="flex items-center gap-2 py-3">
-          <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0ea5e9', borderTopColor: 'transparent' }} />
+          <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0369a1', borderTopColor: 'transparent' }} />
           <span className="text-xs" style={{ color: '#64748b' }}>Computing historical analysis...</span>
         </div>
       ) : analytics ? (
@@ -1114,11 +1041,7 @@ export default function App() {
 
       if (effectiveTab === 'where') {
         if (activeLens === 'global') {
-          const localUrl = `/data/snow/tiles/snapshot/${varCfg.era5Band}/${month}/{z}/{x}/{y}.png`
-          try {
-            const test = await fetch(localUrl.replace('{z}','0').replace('{x}','0').replace('{y}','0'), { method: 'HEAD' })
-            if (test.ok) { await setTileFromUrl(localUrl, { maxNativeZoom: 3, maxZoom: 8 }); setLoading(false); return }
-          } catch {}
+          // Skip local tiles (404s cause console noise) — go straight to GEE proxy
           url = `${GEE_PROXY}/api/snow/tiles/era5?year=2024&month=${String(month).padStart(2,'0')}&band=${varCfg.era5Band}&palette=${colorRamp}`
         } else {
           const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
@@ -1128,11 +1051,7 @@ export default function App() {
       } else if (effectiveTab === 'changing') {
         const startYear = timeRange === '5' ? 2019 : timeRange === '10' ? 2014 : timeRange === '20' ? 2004 : 1980
         if (activeLens === 'global') {
-          const localUrl = `/data/snow/tiles/trend/${varCfg.era5Band}/${month}/{z}/{x}/{y}.png`
-          try {
-            const test = await fetch(localUrl.replace('{z}','0').replace('{x}','0').replace('{y}','0'), { method: 'HEAD' })
-            if (test.ok) { await setTileFromUrl(localUrl, { maxNativeZoom: 3, maxZoom: 8 }); setLoading(false); return }
-          } catch {}
+          // Skip local tiles — go straight to GEE proxy
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
         } else {
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
@@ -1437,7 +1356,7 @@ export default function App() {
         <div className={`hero-overlay ${heroExiting ? 'hero-exit' : ''}`}>
           <div className="hero-bg" />
           <div className="relative z-10 text-center max-w-2xl px-8 hero-enter">
-            <h1 className="text-5xl font-bold tracking-tight mb-4 hero-title-shimmer" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+            <h1 className="text-5xl font-bold tracking-tight mb-4" style={{ fontFamily: "'Inter', system-ui, sans-serif", color: '#0f172a' }}>
               Snow Tracker
             </h1>
             <p className="text-lg leading-relaxed mb-6" style={{ color: '#475569' }}>
@@ -1448,7 +1367,7 @@ export default function App() {
               As the planet warms, understanding how snowfall is changing matters more than ever.
             </p>
             <button onClick={dismissHero}
-              className="btn-iridescent px-8 py-3 rounded-2xl font-medium text-base hover:scale-105">
+              className="snow-next hover:scale-105" style={{ transition: 'all 0.15s' }}>
               Begin Exploring
             </button>
           </div>
@@ -1464,74 +1383,70 @@ export default function App() {
       {/* ─── TOP BAR: Nav + Narrative ─── z-index: 1000 */}
       <div className="absolute top-0 left-0 right-0 z-[1000] pointer-events-none">
         <div className="flex items-start justify-between p-4 pointer-events-auto">
-          {/* Left: Hub link */}
-          <a href="/" style={{color: "#0c4a6e"}} className="glass rounded-xl px-3 py-2 text-sm inline-flex items-center gap-1.5">Hub</a>
+          {/* Left: Hub link (only when inside Command Center) */}
+          <div>
+            {window.location.pathname.startsWith('/snow') && (
+              <a href="/" className="snow-panel rounded-xl px-3 py-2 text-sm inline-flex items-center gap-1.5" style={{ color: '#0369a1' }}>Hub</a>
+            )}
+          </div>
 
           {/* Center: Narrative bar */}
-          <div className="glass-iridescent rounded-2xl px-6 py-2 text-center max-w-xl">
+          <div className="snow-panel rounded-2xl px-6 py-3 text-center max-w-xl">
             {isExplorerMode ? (
               <>
-                <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: '#0ea5e9' }}>Explorer Mode</div>
-                <div className="text-sm font-medium" style={{ color: '#0f172a' }}>Free Exploration</div>
+                <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8' }}>Explorer Mode</div>
+                <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>Free Exploration</div>
               </>
             ) : (
               <>
-                <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: '#0ea5e9' }}>
+                <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8' }}>
                   Step {currentStepIdx + 1} of {STORY_STEPS.length}
                 </div>
-                <div className="text-sm font-medium" style={{ color: '#0f172a' }}>{currentTabConfig.question}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{heroText}</div>
+                <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>{currentTabConfig.question}</div>
+                <div className="text-sm mt-0.5" style={{ color: '#475569' }}>{heroText}</div>
               </>
             )}
-            {loading && <div className="mt-1 flex items-center justify-center gap-2"><div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#0ea5e9' }} /><span className="text-xs" style={{ color: '#0ea5e9' }}>Loading...</span></div>}
+            {loading && <div className="mt-1 flex items-center justify-center gap-2"><div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#0369a1' }} /><span className="text-xs" style={{ color: '#0369a1' }}>Loading...</span></div>}
             {tileError && <div className="mt-1 text-xs" style={{ color: '#dc2626' }}>{tileError}</div>}
           </div>
 
-          {/* Right: About + Info */}
+          {/* Right: Info button only */}
           <div className="flex items-center gap-2">
-            <a href="/about" style={{color: "#0c4a6e"}} className="glass rounded-xl px-3 py-2 text-xs inline-flex items-center gap-1">About</a>
             <button onClick={() => setShowInfoModal(true)}
-              className="glass rounded-full w-9 h-9 flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform cursor-pointer"
-              title="Data source info" style={{ color: '#0c4a6e' }}>i</button>
+              className="snow-panel rounded-full w-9 h-9 flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform cursor-pointer"
+              title="Data source info" style={{ color: '#0369a1' }}>i</button>
           </div>
         </div>
 
-        {/* Step dots — guided mode only */}
-        {isGuided && (
-          <div className="flex justify-center pointer-events-auto -mt-1">
-            <div className="glass rounded-full px-3 py-1.5 flex items-center gap-1.5">
-              {STORY_STEPS.map((step, i) => {
-                const isActive = i === currentStepIdx
-                const isPast = i < currentStepIdx
-                // Show separator between question groups
-                const prevStep = i > 0 ? STORY_STEPS[i-1] : null
-                const isNewQuestion = prevStep && prevStep.tab !== step.tab
-                return (
-                  <div key={i} className="flex items-center gap-1.5">
-                    {isNewQuestion && <div className="w-px h-3 mx-0.5" style={{ background: 'rgba(14,165,233,0.2)' }} />}
-                    <button onClick={() => goToStep(i)}
-                      className="rounded-full transition-all duration-300"
-                      style={{
-                        width: isActive ? 12 : 6, height: 6,
-                        borderRadius: isActive ? 3 : '50%',
-                        background: isActive ? '#0ea5e9' : isPast ? 'rgba(14,165,233,0.4)' : 'rgba(14,165,233,0.15)',
-                        boxShadow: isActive ? '0 2px 8px rgba(14,165,233,0.4)' : 'none',
-                      }}
-                      title={`${step.label} (${TAB_CONFIG.find(t => t.key === step.tab)?.question})`} />
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Left vertical progress bar — guided mode only */}
+      {isGuided && (
+        <div style={{ position: 'fixed', left: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+          {/* Connecting line behind dots */}
+          <div style={{ position: 'absolute', top: 6, bottom: 6, left: '50%', transform: 'translateX(-50%)', width: 2, background: '#e2e8f0', borderRadius: 1 }} />
+          {STORY_STEPS.map((step, i) => (
+            <div key={i} style={{
+              position: 'relative', zIndex: 1,
+              width: i === currentStepIdx ? 14 : 8,
+              height: i === currentStepIdx ? 14 : 8,
+              borderRadius: '50%',
+              background: i < currentStepIdx ? '#0369a1' : i === currentStepIdx ? '#0284c7' : '#cbd5e1',
+              border: i === currentStepIdx ? '2px solid #0369a1' : 'none',
+              transition: 'all 0.3s',
+              cursor: 'pointer',
+              boxShadow: i === currentStepIdx ? '0 0 0 3px rgba(3,105,161,0.2)' : 'none',
+            }} onClick={() => goToStep(i)} title={step.label} />
+          ))}
+        </div>
+      )}
 
       {/* ─── EXPLORER MODE CONTROLS ─── z-index: 900 */}
       {isExplorerMode && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[900] fade-in">
           <div className="flex flex-col items-center gap-1.5">
             {/* Question selector */}
-            <div className="glass rounded-xl p-1 flex items-center gap-0.5">
+            <div className="snow-panel rounded-xl p-1 flex items-center gap-0.5">
               {(['where', 'changing', 'shifting', 'season'] as const).map(q => (
                 <button key={q} onClick={() => setExplorerQuestion(q)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${explorerQuestion === q ? 'tab-active' : 'tab-inactive'}`}>
@@ -1541,7 +1456,7 @@ export default function App() {
             </div>
 
             {/* Lens selector */}
-            <div className="glass rounded-xl p-1 flex items-center gap-0.5">
+            <div className="snow-panel rounded-xl p-1 flex items-center gap-0.5">
               {currentTabConfig.lenses.map(l => (
                 <button key={l.key} onClick={() => handleLensChange(l.key)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${activeLens === l.key ? 'tab-active' : 'tab-inactive'}`}>
@@ -1552,7 +1467,7 @@ export default function App() {
 
             {/* Snow variable toggle */}
             {!isMountainLens && (effectiveTab === 'where' || effectiveTab === 'changing' || effectiveTab === 'season') && (
-              <div className="glass rounded-xl p-1 flex items-center gap-0.5">
+              <div className="snow-panel rounded-xl p-1 flex items-center gap-0.5">
                 {([['snowfall', 'Snowfall'], ['snow_depth', 'Snow Depth'], ['snow_cover', 'Snow Cover']] as const).map(([val, label]) => (
                   <button key={val} onClick={() => setSnowVar(val as any)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${snowVar === val ? 'tab-active' : 'tab-inactive'}`}>
@@ -1564,7 +1479,7 @@ export default function App() {
 
             {/* Time range */}
             {effectiveTab === 'changing' && !isMountainLens && (
-              <div className="glass rounded-xl p-1 flex items-center gap-0.5">
+              <div className="snow-panel rounded-xl p-1 flex items-center gap-0.5">
                 <span className="text-[10px] px-2" style={{ color: '#64748b' }}>Range:</span>
                 {(['5','10','20','all'] as TimeRange[]).map(tr => (
                   <button key={tr} onClick={() => setTimeRange(tr)}
@@ -1581,10 +1496,10 @@ export default function App() {
       {/* ─── STATION SEARCH ─── z-index: 950 (above explorer controls, below top bar) */}
       {isMountainLens && (
         <div className="absolute z-[950] fade-in" style={{ top: isExplorerMode ? 200 : 100, left: '50%', transform: 'translateX(-50%)' }}>
-          <div className="glass rounded-xl px-4 py-2.5 w-80">
+          <div className="snow-panel rounded-xl px-4 py-2.5 w-80">
             {snotelLoading ? (
               <div className="flex items-center gap-2 text-sm" style={{ color: '#64748b' }}>
-                <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0ea5e9', borderTopColor: 'transparent' }} />Loading stations...
+                <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0369a1', borderTopColor: 'transparent' }} />Loading stations...
               </div>
             ) : (
               <div className="relative">
@@ -1593,7 +1508,7 @@ export default function App() {
                   onFocus={() => setShowStationDropdown(true)}
                   placeholder="Search SNOTEL stations..."
                   className="w-full rounded-xl px-3 py-2 text-sm outline-none transition-colors"
-                  style={{ background: 'rgba(255,255,255,0.6)', color: '#0f172a', border: '1px solid rgba(14,165,233,0.2)' }} />
+                  style={{ background: 'rgba(255,255,255,0.6)', color: '#0f172a', border: '1px solid rgba(3,105,161,0.15)' }} />
                 {selectedStation && !showStationDropdown && (
                   <div className="mt-2 flex items-center justify-between text-xs">
                     <span className="font-medium" style={{ color: '#0f172a' }}>{selectedStation.name} ({selectedStation.state})</span>
@@ -1603,10 +1518,10 @@ export default function App() {
                   </div>
                 )}
                 {showStationDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-1 rounded-xl max-h-64 overflow-y-auto z-50" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(14,165,233,0.15)', boxShadow: '0 8px 30px rgba(14,165,233,0.1)' }}>
+                  <div className="absolute top-full left-0 right-0 mt-1 rounded-xl max-h-64 overflow-y-auto z-50" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(3,105,161,0.12)', boxShadow: '0 8px 30px rgba(3,105,161,0.08)' }}>
                     {filteredStations.map(s => (
                       <button key={s.id} onClick={() => selectStation(s)}
-                        className="w-full text-left px-3 py-2 transition-colors last:border-0 hover:bg-sky-50" style={{ borderBottom: '1px solid rgba(14,165,233,0.06)' }}>
+                        className="w-full text-left px-3 py-2 transition-colors last:border-0 hover:bg-sky-50" style={{ borderBottom: '1px solid #e2e8f0' }}>
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-sm font-medium" style={{ color: '#0f172a' }}>{s.name}</div>
@@ -1632,7 +1547,7 @@ export default function App() {
       {/* Timelapse year overlay */}
       {timelapseActive && timelapseFrames.length > 0 && (
         <div className="absolute top-32 left-1/2 -translate-x-1/2 z-[100] pointer-events-none">
-          <div className="text-8xl font-bold tracking-wider" style={{ color: 'rgba(14,165,233,0.2)', textShadow: '0 0 60px rgba(14,165,233,0.1)' }}>
+          <div className="text-8xl font-bold tracking-wider" style={{ color: 'rgba(3,105,161,0.15)', textShadow: '0 0 60px rgba(3,105,161,0.08)' }}>
             {timelapseFrames[timelapseIdx]?.year || ''}
           </div>
         </div>
@@ -1641,13 +1556,13 @@ export default function App() {
       {/* ─── BOTTOM LEFT: Animation controls ─── z-index: 800 */}
       <div className="absolute bottom-24 left-4 z-[800] flex flex-col gap-2.5">
         {!isMountainLens && (
-          <div className="glass rounded-xl px-4 py-3"
+          <div className="snow-panel rounded-xl px-4 py-3"
             onMouseEnter={() => setShowSpeedControl(true)} onMouseLeave={() => setShowSpeedControl(false)}>
             {!timelapseActive ? (
               <button onClick={startTimelapse} disabled={animLoading || effectiveTab === 'shifting'}
                 className="flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" style={{ color: '#334155' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ background: 'linear-gradient(135deg, #0ea5e9, #0891b2)', boxShadow: '0 2px 12px rgba(14,165,233,0.3)' }}>
-                  <span className="text-lg ml-0.5 text-white">&#9654;</span>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ background: '#0369a1', boxShadow: '0 2px 12px rgba(3,105,161,0.2)' }}>
+                  <span className="text-sm font-semibold text-white">Play</span>
                 </div>
                 <div><div className="text-xs font-medium" style={{ color: '#0f172a' }}>Animate</div><div className="text-[10px]" style={{ color: '#64748b' }}>2015 - 2024</div></div>
               </button>
@@ -1655,24 +1570,24 @@ export default function App() {
               <div className="space-y-2">
                 {animLoading ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(14,165,233,0.1)' }}><div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0ea5e9', borderTopColor: 'transparent' }} /></div>
-                    <span className="text-xs" style={{ color: '#0ea5e9' }}>Loading...</span>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(3,105,161,0.08)' }}><div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0369a1', borderTopColor: 'transparent' }} /></div>
+                    <span className="text-xs" style={{ color: '#0369a1' }}>Loading...</span>
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setPlaying(!playing)} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ background: 'linear-gradient(135deg, #0ea5e9, #0891b2)', boxShadow: '0 2px 12px rgba(14,165,233,0.3)' }}>
-                        <span className="text-lg text-white">{playing ? '\u23F8' : '\u25B6'}</span>
+                      <button onClick={() => setPlaying(!playing)} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ background: '#0369a1', boxShadow: '0 2px 12px rgba(3,105,161,0.2)' }}>
+                        <span className="text-sm font-semibold text-white">{playing ? 'Pause' : 'Play'}</span>
                       </button>
                       <div className="text-xs font-medium" style={{ color: '#0f172a' }}>{timelapseIdx + 1} / {timelapseFrames.length}</div>
                       <button onClick={() => { setTimelapseActive(false); setPlaying(false); loadDataForView() }} className="ml-auto text-sm" style={{ color: '#94a3b8' }}>x</button>
                     </div>
                     <input type="range" min={0} max={timelapseFrames.length - 1} value={timelapseIdx}
-                      onChange={e => { setTimelapseIdx(Number(e.target.value)); setPlaying(false) }} className="w-full h-1.5 appearance-none rounded-lg" style={{ background: 'rgba(14,165,233,0.15)' }} />
+                      onChange={e => { setTimelapseIdx(Number(e.target.value)); setPlaying(false) }} className="w-full h-1.5 appearance-none rounded-lg" style={{ background: 'rgba(3,105,161,0.12)' }} />
                     {showSpeedControl && (
                       <div className="flex items-center gap-2 fade-in">
                         <span className="text-[10px]" style={{ color: '#64748b' }}>Speed</span>
-                        <input type="range" min={0.5} max={3} step={0.25} value={animSpeed} onChange={e => setAnimSpeed(Number(e.target.value))} className="flex-1 h-1 appearance-none rounded" style={{ background: 'rgba(14,165,233,0.15)' }} />
+                        <input type="range" min={0.5} max={3} step={0.25} value={animSpeed} onChange={e => setAnimSpeed(Number(e.target.value))} className="flex-1 h-1 appearance-none rounded" style={{ background: 'rgba(3,105,161,0.12)' }} />
                         <span className="text-[10px] min-w-[2rem]" style={{ color: '#64748b' }}>{animSpeed}x</span>
                       </div>
                     )}
@@ -1686,13 +1601,13 @@ export default function App() {
 
       {/* ─── BOTTOM RIGHT: Legend + Color Ramp ─── z-index: 800 */}
       <div className="absolute bottom-24 right-4 z-[800]">
-        <div className="glass rounded-2xl w-52 overflow-hidden transition-all duration-300">
-          <button onClick={() => setLegendExpanded(!legendExpanded)} className="w-full px-4 py-3 text-left cursor-pointer transition-colors hover:bg-sky-50/50">
+        <div className="snow-panel rounded-2xl w-52 overflow-hidden transition-all duration-300">
+          <button onClick={() => setLegendExpanded(!legendExpanded)} className="w-full px-4 py-3 text-left cursor-pointer transition-colors hover:bg-slate-50">
             {(effectiveTab === 'where' || effectiveTab === 'season') && !isMountainLens ? (
               <div className="text-xs">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-medium" style={{ color: '#334155' }}>{effectiveTab === 'season' || activeLens === 'us' ? 'Snow Depth' : 'Snowfall'}</span>
-                  <span className="text-[10px]" style={{ color: '#0ea5e9' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
+                  <span className="text-[10px]" style={{ color: '#0369a1' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: getRampGradient(colorRamp, 'where') }} />
                 <div className="flex justify-between mt-1 text-[10px]" style={{ color: '#94a3b8' }}><span>None</span><span>Deep</span></div>
@@ -1701,7 +1616,7 @@ export default function App() {
               <div className="text-xs">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-medium" style={{ color: '#334155' }}>Snowfall Trend</span>
-                  <span className="text-[10px]" style={{ color: '#0ea5e9' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
+                  <span className="text-[10px]" style={{ color: '#0369a1' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: getRampGradient(colorRamp, 'changing') }} />
                 <div className="flex justify-between mt-1 text-[10px]" style={{ color: '#94a3b8' }}><span>Declining</span><span>Increasing</span></div>
@@ -1710,7 +1625,7 @@ export default function App() {
               <div className="text-xs">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-medium" style={{ color: '#334155' }}>Season Shift</span>
-                  <span className="text-[10px]" style={{ color: '#0ea5e9' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
+                  <span className="text-[10px]" style={{ color: '#0369a1' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: getRampGradient(colorRamp, 'shifting') }} />
                 <div className="flex justify-between mt-1 text-[10px]" style={{ color: '#94a3b8' }}><span>Earlier</span><span>Later</span></div>
@@ -1730,13 +1645,13 @@ export default function App() {
           </button>
 
           {legendExpanded && !isMountainLens && (
-            <div className="px-4 pb-3 pt-2 fade-in" style={{ borderTop: '1px solid rgba(14,165,233,0.1)' }}>
-              <div className="text-[10px] uppercase tracking-wider mb-2 font-medium" style={{ color: '#0ea5e9' }}>Color Ramp</div>
+            <div className="px-4 pb-3 pt-2 fade-in" style={{ borderTop: '1px solid #e2e8f0' }}>
+              <div className="text-[10px] uppercase tracking-wider mb-2 font-medium" style={{ color: '#0369a1' }}>Color Ramp</div>
               <div className="space-y-1">
                 {getAvailableRamps(effectiveTab).map(({ key, label, gradient }) => (
                   <button key={key} onClick={() => { setColorRamp(key as ColorRamp); setLegendExpanded(false) }}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all hover:bg-sky-50/50"
-                    style={{ background: colorRamp === key ? 'rgba(14,165,233,0.08)' : 'transparent', border: colorRamp === key ? '1px solid rgba(14,165,233,0.25)' : '1px solid transparent' }}>
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all hover:bg-slate-50"
+                    style={{ background: colorRamp === key ? 'rgba(3,105,161,0.08)' : 'transparent', border: colorRamp === key ? '1px solid #0369a1' : '1px solid transparent' }}>
                     <div className="h-3 flex-1 rounded-full overflow-hidden" style={{ background: gradient }} />
                     <span className="text-[10px] min-w-[60px] text-right" style={{ color: '#64748b' }}>{label}</span>
                   </button>
@@ -1750,17 +1665,17 @@ export default function App() {
       {/* ─── INFO PANEL ─── z-index: 850 (below top bar, above legend) */}
       {infoPanelOpen && (isMountainLens ? selectedStation : clickedPoint) && (
         <div className="absolute top-20 right-4 z-[850] w-[400px] slide-up" style={{ maxHeight: 'calc(100vh - 140px)' }}>
-          <div className="glass-iridescent rounded-2xl overflow-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 160px)', boxShadow: '0 8px 40px rgba(14,165,233,0.1)' }}>
+          <div className="snow-panel rounded-2xl overflow-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 160px)', boxShadow: '0 8px 40px rgba(3,105,161,0.08)' }}>
             {isMountainLens && selectedStation ? (
               <>
-                <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(14,165,233,0.1)' }}>
+                <div className="px-5 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>{selectedStation.name}</div>
                       <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{selectedStation.state} · {selectedStation.elevation.toLocaleString()}' · ID {selectedStation.id}</div>
                     </div>
                     <button onClick={() => { setInfoPanelOpen(false); setSelectedStation(null); setAnalytics(null) }}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100" style={{ background: 'rgba(14,165,233,0.08)', color: '#64748b' }}>x</button>
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100" style={{ background: 'rgba(3,105,161,0.08)', color: '#64748b' }}>x</button>
                   </div>
                 </div>
                 <div className="px-5 py-3">
@@ -1776,7 +1691,7 @@ export default function App() {
               </>
             ) : (
               <>
-                <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(14,165,233,0.1)' }}>
+                <div className="px-5 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>
@@ -1785,13 +1700,13 @@ export default function App() {
                       <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{gridPointData ? 'Pre-computed' : 'Live query'}</div>
                     </div>
                     <button onClick={() => { setInfoPanelOpen(false); setClickedPoint(null) }}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100" style={{ background: 'rgba(14,165,233,0.08)', color: '#64748b' }}>x</button>
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100" style={{ background: 'rgba(3,105,161,0.08)', color: '#64748b' }}>x</button>
                   </div>
                 </div>
                 <div className="px-5 py-3">
                   {tsLoading ? (
                     <div className="flex items-center gap-2 py-4">
-                      <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0ea5e9', borderTopColor: 'transparent' }} />
+                      <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0369a1', borderTopColor: 'transparent' }} />
                       <span className="text-sm" style={{ color: '#64748b' }}>Querying snow data...</span>
                     </div>
                   ) : (
@@ -1799,13 +1714,13 @@ export default function App() {
                       <p className="text-sm leading-relaxed" style={{ color: '#475569' }}>{narrative}</p>
                       {gridPointData && (
                         <div className="grid grid-cols-2 gap-2 mt-3">
-                          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.12)' }}>
+                          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(3,105,161,0.06)', border: '1px solid rgba(3,105,161,0.1)' }}>
                             <div className="text-2xl font-bold" style={{ color: gridPointData.trend > 0 ? '#0891b2' : '#dc2626' }}>
                               {gridPointData.trend > 0 ? '+' : ''}{(gridPointData.trend * 10000).toFixed(1)}
                             </div>
                             <div className="text-[10px] mt-1" style={{ color: '#64748b' }}>mm/decade</div>
                           </div>
-                          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.12)' }}>
+                          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(3,105,161,0.06)', border: '1px solid rgba(3,105,161,0.1)' }}>
                             <div className="text-2xl font-bold" style={{ color: '#7c3aed' }}>{(gridPointData.variability * 100).toFixed(0)}%</div>
                             <div className="text-[10px] mt-1" style={{ color: '#64748b' }}>variability</div>
                           </div>
@@ -1816,10 +1731,10 @@ export default function App() {
                           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <AreaChart data={timeSeries}>
                               <defs><linearGradient id="snowGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.25} /><stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.02} /></linearGradient></defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(14,165,233,0.1)" />
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(3,105,161,0.08)" />
                               <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 8 }} interval={Math.max(1, Math.floor(timeSeries.length / 6))} />
                               <YAxis tick={{ fill: '#94a3b8', fontSize: 9 }} width={40} />
-                              <RTooltip contentStyle={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 12, fontSize: 11, color: '#0f172a' }} />
+                              <RTooltip contentStyle={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(3,105,161,0.12)', borderRadius: 12, fontSize: 11, color: '#0f172a' }} />
                               <Area type="monotone" dataKey="value" stroke="#0ea5e9" fill="url(#snowGrad)" strokeWidth={1.5} name="Snow" />
                             </AreaChart>
                           </ResponsiveContainer>
@@ -1827,7 +1742,7 @@ export default function App() {
                       )}
                       {yearlyData.length > 2 && (
                         <div className="mt-2">
-                          <div className="text-[10px] mb-1 font-medium uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Annual Totals</div>
+                          <div className="text-[10px] mb-1 font-medium uppercase tracking-wider" style={{ color: '#0369a1' }}>Annual Totals</div>
                           <div style={{ height: 90 }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                               <BarChart data={yearlyData}>
@@ -1855,14 +1770,14 @@ export default function App() {
         return (
           <div className="absolute inset-0 z-[2000] flex items-center justify-center" onClick={() => setShowInfoModal(false)}>
             <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.25)' }} />
-            <div className="relative glass-iridescent rounded-3xl px-8 py-6 max-w-md" style={{ boxShadow: '0 8px 40px rgba(14,165,233,0.15)' }} onClick={e => e.stopPropagation()}>
+            <div className="relative snow-panel rounded-3xl px-8 py-6 max-w-md" style={{ boxShadow: '0 8px 40px rgba(3,105,161,0.12)' }} onClick={e => e.stopPropagation()}>
               <button onClick={() => setShowInfoModal(false)} className="absolute top-3 right-4 text-lg" style={{ color: '#94a3b8' }}>x</button>
               <h3 className="text-lg font-semibold mb-4" style={{ color: '#0f172a' }}>Data Source</h3>
               <div className="space-y-3">
-                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Source</div><div className="text-sm" style={{ color: '#0f172a' }}>{info.source}</div></div>
-                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Resolution</div><div className="text-sm" style={{ color: '#0f172a' }}>{info.resolution}</div></div>
-                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Method</div><div className="text-sm leading-relaxed" style={{ color: '#475569' }}>{info.method}</div></div>
-                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Collection ID</div><div className="text-xs font-mono" style={{ color: '#0891b2' }}>{info.collection}</div></div>
+                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0369a1' }}>Source</div><div className="text-sm" style={{ color: '#0f172a' }}>{info.source}</div></div>
+                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0369a1' }}>Resolution</div><div className="text-sm" style={{ color: '#0f172a' }}>{info.resolution}</div></div>
+                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0369a1' }}>Method</div><div className="text-sm leading-relaxed" style={{ color: '#475569' }}>{info.method}</div></div>
+                <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0369a1' }}>Collection ID</div><div className="text-xs font-mono" style={{ color: '#0891b2' }}>{info.collection}</div></div>
               </div>
             </div>
           </div>
@@ -1872,7 +1787,7 @@ export default function App() {
       {/* Shifting Chart Panel */}
       {effectiveTab === 'shifting' && !isMountainLens && shiftingData.length > 0 && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[700] fade-in" style={{ width: 'min(600px, 90vw)' }}>
-          <div className="glass-iridescent rounded-2xl px-6 py-5" style={{ boxShadow: '0 8px 40px rgba(14,165,233,0.1)' }}>
+          <div className="snow-panel rounded-2xl px-6 py-5" style={{ boxShadow: '0 8px 40px rgba(3,105,161,0.08)' }}>
             <div className="flex items-center justify-between mb-3">
               <div>
                 <div className="text-sm font-semibold" style={{ color: '#0f172a' }}>Seasonal Snowfall Distribution</div>
@@ -1894,17 +1809,17 @@ export default function App() {
                     <linearGradient id="earlyGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.25} /><stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.02} /></linearGradient>
                     <linearGradient id="recentGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#7c3aed" stopOpacity={0.2} /><stop offset="95%" stopColor="#7c3aed" stopOpacity={0.02} /></linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(14,165,233,0.08)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(3,105,161,0.08)" />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} width={45} />
-                  <RTooltip contentStyle={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 12, fontSize: 11, color: '#0f172a' }} />
+                  <RTooltip contentStyle={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(3,105,161,0.12)', borderRadius: 12, fontSize: 11, color: '#0f172a' }} />
                   <Area type="monotone" dataKey="early" stroke="#0ea5e9" fill="url(#earlyGrad)" strokeWidth={2} name={`2015-${shiftingPeriod === '10' ? '2019' : '2018'}`} />
                   <Area type="monotone" dataKey="recent" stroke="#7c3aed" fill="url(#recentGrad)" strokeWidth={2} name={`${shiftingPeriod === '10' ? '2020' : '2019'}-2024`} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center gap-4 mt-2">
-              <span className="flex items-center gap-1.5 text-xs" style={{ color: '#64748b' }}><span className="w-3 h-0.5 inline-block rounded" style={{ background: '#0ea5e9' }} /> Early period</span>
+              <span className="flex items-center gap-1.5 text-xs" style={{ color: '#64748b' }}><span className="w-3 h-0.5 inline-block rounded" style={{ background: '#0369a1' }} /> Early period</span>
               <span className="flex items-center gap-1.5 text-xs" style={{ color: '#64748b' }}><span className="w-3 h-0.5 inline-block rounded" style={{ background: '#7c3aed' }} /> Recent period</span>
               {shiftingInsight && <span className="text-xs font-medium ml-auto" style={{ color: '#0891b2' }}>{shiftingInsight}</span>}
             </div>
@@ -1915,7 +1830,7 @@ export default function App() {
       {/* Season summary overlay */}
       {effectiveTab === 'season' && isMountainLens && !selectedStation && snotelLoaded && (
         <div className="absolute top-32 left-1/2 -translate-x-1/2 z-[600] fade-in">
-          <div className="glass-iridescent rounded-2xl px-8 py-6 text-center max-w-sm" style={{ boxShadow: '0 8px 40px rgba(14,165,233,0.1)' }}>
+          <div className="snow-panel rounded-2xl px-8 py-6 text-center max-w-sm" style={{ boxShadow: '0 8px 40px rgba(3,105,161,0.08)' }}>
             <div className="text-5xl font-bold" style={{ color: getSnotelColor(snotelSummary.avg) }}>{snotelSummary.avg}%</div>
             <div className="text-sm mt-1" style={{ color: '#475569' }}>average of median across {snotelSummary.total} stations</div>
             <div className="flex items-center justify-center gap-6 mt-3 text-sm">
@@ -1929,37 +1844,25 @@ export default function App() {
 
       {/* ═══ BIG NEXT BUTTON ═══ z-index: 900, fixed bottom center */}
       {!infoPanelOpen && !timelapseActive && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[900]">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-3">
+          {isGuided && hasPrevStep && (
+            <button onClick={() => goToStep(currentStepIdx - 1)}
+              className="snow-btn rounded-xl px-4 py-4 transition-all hover:scale-105"
+              style={{ color: '#475569' }}>&larr;</button>
+          )}
           {isGuided && hasNextStep && (
             <button onClick={() => goToStep(currentStepIdx + 1)}
-              className="btn-iridescent rounded-2xl px-10 py-4 flex items-center gap-4 transition-all hover:scale-105 group"
-              style={{ boxShadow: '0 4px 25px rgba(14,165,233,0.25)', minWidth: 220 }}>
-              <div className="text-left">
-                <div className="text-[10px] uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Next</div>
-                <div className="text-sm font-semibold" style={{ color: '#0f172a' }}>
-                  {STORY_STEPS[currentStepIdx + 1]?.label}
-                </div>
-              </div>
-              <span className="text-2xl transition-transform group-hover:translate-x-1" style={{ color: '#0ea5e9' }}>&rarr;</span>
+              className="snow-next flex items-center gap-3 transition-all hover:scale-105 group">
+              <span>Next: {STORY_STEPS[currentStepIdx + 1]?.label}</span>
+              <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
             </button>
           )}
           {isGuided && !hasNextStep && (
             <button onClick={enterExplorer}
-              className="btn-iridescent rounded-2xl px-10 py-4 flex items-center gap-4 transition-all hover:scale-105 group"
-              style={{ boxShadow: '0 4px 25px rgba(14,165,233,0.25)', minWidth: 220 }}>
-              <div className="text-left">
-                <div className="text-[10px] uppercase tracking-wider" style={{ color: '#0ea5e9' }}>Story Complete</div>
-                <div className="text-sm font-semibold" style={{ color: '#0f172a' }}>
-                  Enter Explorer Mode
-                </div>
-              </div>
-              <span className="text-2xl transition-transform group-hover:translate-x-1" style={{ color: '#0ea5e9' }}>&rarr;</span>
+              className="snow-next flex items-center gap-3 transition-all hover:scale-105 group">
+              <span>Enter Explorer Mode</span>
+              <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
             </button>
-          )}
-          {isGuided && hasPrevStep && (
-            <button onClick={() => goToStep(currentStepIdx - 1)}
-              className="absolute -left-16 top-1/2 -translate-y-1/2 glass rounded-full w-10 h-10 flex items-center justify-center text-sm transition-all hover:scale-110"
-              style={{ color: '#64748b' }}>&larr;</button>
           )}
         </div>
       )}
