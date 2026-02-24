@@ -3,6 +3,13 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   ResponsiveContainer, Area, AreaChart, Cell, ReferenceLine, ComposedChart, Scatter,
 } from 'recharts'
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { Protocol } from 'pmtiles'
+
+// Register PMTiles protocol
+const pmtilesProtocol = new Protocol()
+maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile)
 
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -402,7 +409,8 @@ const snowCSS = `
 .tab-inactive:hover { color: #0f172a; background: #f1f5f9; }
 
 /* Force dark bg on map container */
-.leaflet-container { background: #0f172a !important; }
+.maplibregl-map { background: #0f172a !important; }
+.maplibregl-canvas { outline: none; }
 
 /* ─── Mobile Responsive ─── */
 @media (max-width: 640px) {
@@ -743,11 +751,11 @@ export default function App() {
 
   // Map
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<any>(null)
-  const tileLayerRef = useRef<any>(null)
-  const baseTileRef = useRef<any>(null)
-  const snotelLayerRef = useRef<any>(null)
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  // Track current overlay layer/source IDs for cleanup
+  const currentTileIdRef = useRef<string | null>(null)
+  const tileIdCounterRef = useRef(0)
   const [loading, setLoading] = useState(false)
   const [tileError, setTileError] = useState<string | null>(null)
   const [currentZoom, setCurrentZoom] = useState(3)
@@ -791,6 +799,7 @@ export default function App() {
 
   // Info modal (Issue 1)
   const [showInfoModal, setShowInfoModal] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
 
   // Color ramp (Issue 4)
   type ColorRamp = 'cool_blues' | 'arctic' | 'warm_snow' | 'viridis' | 'plasma' | 'deep_purple' | 'red_blue' | 'brown_green' | 'spectral' | 'coolwarm' | 'orange_teal' | 'piyg'
@@ -808,8 +817,12 @@ export default function App() {
   const [heroExiting, setHeroExiting] = useState(false)
   const [showDataControls, setShowDataControls] = useState(false)
 
-  // Smooth animation (Issue 4)
-  const prevTileLayerRef = useRef<any>(null)
+  // Animation tile tracking
+  const animTileIdRef = useRef<string | null>(null)
+
+  // Ref for activeLens so map click handler stays current
+  const activeLensRef = useRef(activeLens)
+  useEffect(() => { activeLensRef.current = activeLens }, [activeLens])
 
   // Shifting chart (Issue 5)
   const [shiftingPeriod, setShiftingPeriod] = useState<'10' | '20'>('20')
@@ -900,84 +913,178 @@ export default function App() {
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
-    let cancelled = false
-    const init = async () => {
-      const L = (await import('leaflet')).default
-      await import('leaflet/dist/leaflet.css')
-      if (cancelled || !mapRef.current) return
-      const map = L.map(mapRef.current, { center: isMobile ? [39, -98] : [40, -30], zoom: isMobile ? 4 : 3, zoomControl: false, attributionControl: false })
-      const base = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map)
-      baseTileRef.current = base
-      L.control.zoom({ position: 'bottomright' }).addTo(map)
-      map.on('click', (e: any) => {
-        if (activeLens === 'mountain') return
-        const { lat, lng } = e.latlng
-        setClickedPoint({ lat: Math.round(lat * 100) / 100, lon: Math.round(lng * 100) / 100 })
-        setInfoPanelOpen(true)
-      })
-      map.on('zoomend', () => setCurrentZoom(map.getZoom()))
-      mapInstanceRef.current = map
-      setMapReady(true)
-    }
-    init()
-    return () => { cancelled = true }
-  }, [])
-
-  useEffect(() => {
-    const map = mapInstanceRef.current
-    if (!map) return
-    map.off('click')
-    map.on('click', (e: any) => {
-      if (activeLens === 'mountain') return
-      const { lat, lng } = e.latlng
+    const map = new maplibregl.Map({
+      container: mapRef.current,
+      style: {
+        version: 8,
+        sources: {
+          carto: {
+            type: 'raster',
+            tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', 'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'],
+            tileSize: 256,
+            maxzoom: 18,
+          },
+        },
+        layers: [{ id: 'carto', type: 'raster', source: 'carto' }],
+      },
+      center: isMobile ? [-98, 39] : [-30, 40],
+      zoom: isMobile ? 4 : 3,
+      attributionControl: false,
+    })
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
+    map.on('click', (e) => {
+      // Check if click was on snotel layer
+      const features = map.queryRenderedFeatures(e.point, { layers: ['snotel-circles'] }).length
+      if (features > 0) return // handled by snotel click handler
+      if (activeLensRef.current === 'mountain') return
+      const { lat, lng } = e.lngLat
       setClickedPoint({ lat: Math.round(lat * 100) / 100, lon: Math.round(lng * 100) / 100 })
       setInfoPanelOpen(true)
     })
-  }, [activeLens])
+    map.on('zoomend', () => setCurrentZoom(Math.round(map.getZoom())))
+    map.on('load', () => {
+      mapInstanceRef.current = map
+      setMapReady(true)
+    })
+    return () => { map.remove() }
+  }, [])
+
+  // activeLens ref already keeps click handler current — no re-registration needed
 
   // Basemap
   useEffect(() => {
-    if (!baseTileRef.current) return
+    const map = mapInstanceRef.current
+    if (!map || !map.getSource('carto')) return
     const useDark = effectiveTab === 'where' || effectiveTab === 'season' || activeTab === 'explorer'
-    baseTileRef.current.setUrl(useDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png')
+    const style = useDark ? 'dark_all' : 'light_all'
+    const tiles = [`https://a.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, `https://b.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`, `https://c.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`]
+    const source = map.getSource('carto') as maplibregl.RasterTileSource
+    // RasterTileSource doesn't have setTiles in all versions, so we update via style
+    if ((source as any).setTiles) {
+      (source as any).setTiles(tiles)
+    }
   }, [activeTab, effectiveTab])
 
   // ═══════════════════════════════════════════════════════════════════
   // TILE HELPERS
   // ═══════════════════════════════════════════════════════════════════
-  const clearTileLayer = useCallback(async () => {
-    if (mapInstanceRef.current && tileLayerRef.current) { mapInstanceRef.current.removeLayer(tileLayerRef.current); tileLayerRef.current = null }
+  const removeTileLayer = useCallback((layerId: string | null) => {
+    const map = mapInstanceRef.current
+    if (!map || !layerId) return
+    try { if (map.getLayer(layerId)) map.removeLayer(layerId) } catch {}
+    try { if (map.getSource(layerId)) map.removeSource(layerId) } catch {}
   }, [])
 
-  const setTileFromUrl = useCallback(async (tileUrl: string, opts?: { opacity?: number; maxZoom?: number; maxNativeZoom?: number }) => {
-    const L = (await import('leaflet')).default
-    if (!mapInstanceRef.current) return
-    if (tileLayerRef.current) mapInstanceRef.current.removeLayer(tileLayerRef.current)
-    const layer = L.tileLayer(tileUrl, { opacity: opts?.opacity ?? 0.75, maxZoom: opts?.maxZoom ?? 12, maxNativeZoom: opts?.maxNativeZoom, errorTileUrl: '' })
-    layer.addTo(mapInstanceRef.current)
-    tileLayerRef.current = layer
+  const clearTileLayer = useCallback(() => {
+    removeTileLayer(currentTileIdRef.current)
+    currentTileIdRef.current = null
   }, [])
 
-  const clearSnotelMarkers = useCallback(async () => {
-    if (mapInstanceRef.current && snotelLayerRef.current) { mapInstanceRef.current.removeLayer(snotelLayerRef.current); snotelLayerRef.current = null }
+  const setTileFromUrl = useCallback((tileUrl: string, opts?: { opacity?: number; maxZoom?: number; maxNativeZoom?: number }) => {
+    const map = mapInstanceRef.current
+    if (!map) return
+    clearTileLayer()
+    const id = `snow-tile-${++tileIdCounterRef.current}`
+    map.addSource(id, {
+      type: 'raster',
+      tiles: [tileUrl],
+      tileSize: 256,
+      maxzoom: opts?.maxNativeZoom ?? opts?.maxZoom ?? 12,
+    })
+    map.addLayer({
+      id,
+      type: 'raster',
+      source: id,
+      paint: { 'raster-opacity': opts?.opacity ?? 0.75 },
+    })
+    currentTileIdRef.current = id
   }, [])
 
-  const showSnotelMarkers = useCallback(async (stations: SnotelStation[]) => {
-    if (!mapInstanceRef.current) return
-    const L = (await import('leaflet')).default
-    await clearSnotelMarkers()
-    const group = L.layerGroup()
-    for (const s of stations) {
+  const clearSnotelMarkers = useCallback(() => {
+    const map = mapInstanceRef.current
+    if (!map) return
+    try { if (map.getLayer('snotel-circles')) map.removeLayer('snotel-circles') } catch {}
+    try { if (map.getSource('snotel')) map.removeSource('snotel') } catch {}
+    // Remove popup if any
+    snotelPopupRef.current?.remove()
+  }, [])
+
+  const snotelPopupRef = useRef<maplibregl.Popup | null>(null)
+  const snotelStationsRef = useRef<SnotelStation[]>([])
+
+  const showSnotelMarkers = useCallback((stations: SnotelStation[]) => {
+    const map = mapInstanceRef.current
+    if (!map) return
+    clearSnotelMarkers()
+    snotelStationsRef.current = stations
+
+    // Build color match expression
+    const colorExpr: any = ['match', ['get', 'colorKey']]
+    // Pre-compute color keys
+    const features = stations.map(s => {
       const color = getSnotelColor(s.pctMedian)
-      const marker = L.circleMarker([s.lat, s.lon], { radius: 6, fillColor: color, color: '#fff', weight: 1.5, opacity: 1, fillOpacity: 0.85 })
-      marker.bindTooltip(`<b>${s.name}</b><br/>${s.swe !== null ? s.swe + '″ SWE' : ''} ${s.pctMedian !== null ? '• ' + s.pctMedian + '% of median' : ''}`, { direction: 'top', offset: [0, -8] })
-      marker.on('click', (e: any) => { L.DomEvent.stopPropagation(e); selectStation(s) })
-      group.addLayer(marker)
+      return {
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [s.lon, s.lat] },
+        properties: { id: s.id, name: s.name, state: s.state, elevation: s.elevation, swe: s.swe, pctMedian: s.pctMedian, colorKey: color },
+      }
+    })
+
+    // Unique colors for match expression
+    const uniqueColors = [...new Set(features.map(f => f.properties.colorKey))]
+    for (const c of uniqueColors) {
+      colorExpr.push(c, c)
     }
-    group.addTo(mapInstanceRef.current)
-    snotelLayerRef.current = group
+    colorExpr.push('#94a3b8') // fallback
+
+    map.addSource('snotel', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features },
+    })
+
+    map.addLayer({
+      id: 'snotel-circles',
+      type: 'circle',
+      source: 'snotel',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': colorExpr as any,
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': '#fff',
+        'circle-opacity': 0.85,
+      },
+    })
+
+    // Hover tooltip
+    const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: [0, -8] })
+    snotelPopupRef.current = popup
+
+    map.on('mouseenter', 'snotel-circles', (e) => {
+      map.getCanvas().style.cursor = 'pointer'
+      if (e.features && e.features[0]) {
+        const props = e.features[0].properties!
+        const coords = (e.features[0].geometry as any).coordinates.slice()
+        popup.setLngLat(coords as [number, number])
+          .setHTML(`<b>${props.name}</b><br/>${props.swe !== null && props.swe !== 'null' ? props.swe + '″ SWE' : ''} ${props.pctMedian !== null && props.pctMedian !== 'null' ? '• ' + props.pctMedian + '% of median' : ''}`)
+          .addTo(map)
+      }
+    })
+
+    map.on('mouseleave', 'snotel-circles', () => {
+      map.getCanvas().style.cursor = ''
+      popup.remove()
+    })
+
+    map.on('click', 'snotel-circles', (e) => {
+      if (e.features && e.features[0]) {
+        const props = e.features[0].properties!
+        const station = snotelStationsRef.current.find(s => s.id === props.id)
+        if (station) {
+          e.originalEvent.stopPropagation()
+          selectStation(station)
+        }
+      }
+    })
   }, [])
 
   // ═══════════════════════════════════════════════════════════════════
@@ -989,7 +1096,7 @@ export default function App() {
     setStationSearch('')
     setInfoPanelOpen(true)
     setAnalytics(null)
-    mapInstanceRef.current?.flyTo([station.lat, station.lon], 10, { duration: 1.5 })
+    mapInstanceRef.current?.flyTo({ center: [station.lon, station.lat], zoom: 10, duration: 1500 })
     loadHydrograph(station)
     loadPORAnalytics(station)
   }, [snotelStations])
@@ -1058,14 +1165,19 @@ export default function App() {
   // ═══════════════════════════════════════════════════════════════════
   const loadDataForView = useCallback(async () => {
     if (!mapInstanceRef.current) return
-    await clearTileLayer()
-    await clearSnotelMarkers()
+    clearTileLayer()
+    clearSnotelMarkers()
+    // Also clear animation tiles
+    if (animTileIdRef.current) {
+      removeTileLayer(animTileIdRef.current)
+      animTileIdRef.current = null
+    }
     setTileError(null)
 
     if (isMountainLens) {
       if (snotelStations.length > 0) {
         showSnotelMarkers(snotelStations)
-        mapInstanceRef.current.flyTo([42, -110], 5, { duration: 1.5 })
+        mapInstanceRef.current.flyTo({ center: [-110, 42], zoom: 5, duration: 1500 })
       }
       return
     }
@@ -1075,12 +1187,12 @@ export default function App() {
 
     const varCfg = SNOW_VAR_CONFIG[snowVar]
 
-    // GCS-hosted pre-rendered tiles (fast, no proxy needed)
-    const GCS_TILES = 'https://storage.googleapis.com/snow-tracker-cogs/tiles'
+    // GCS-hosted pre-rendered tiles
+    const GCS_BASE = 'https://storage.googleapis.com/snow-tracker-cogs'
     const GCS_TILE_SETS: Record<string, string> = {
-      'where-us-snowfall': `${GCS_TILES}/daymet_avg_max_swe/{z}/{x}/{y}.png`,
-      'changing-us-snowfall': `${GCS_TILES}/daymet_snowfall_trend/{z}/{x}/{y}.png`,
-      'shifting-us-snowfall': `${GCS_TILES}/modis_snow_days/{z}/{x}/{y}.png`,
+      'where-us-snowfall': `${GCS_BASE}/tiles/daymet_avg_max_swe/{z}/{x}/{y}.png`,
+      'changing-us-snowfall': `${GCS_BASE}/tiles/daymet_snowfall_trend/{z}/{x}/{y}.png`,
+      'shifting-us-snowfall': `${GCS_BASE}/tiles/modis_snow_days/{z}/{x}/{y}.png`,
     }
 
     const t0 = performance.now()
@@ -1097,8 +1209,8 @@ export default function App() {
 
       if (useGCS && !forceGEE) {
         sourceLabel = `GCS Tiles (pre-rendered ${gcsKey.includes('daymet') || effectiveTab === 'where' ? 'Daymet 1km' : effectiveTab === 'shifting' ? 'MODIS 500m' : 'Daymet 1km'})`
-        await setTileFromUrl(GCS_TILE_SETS[gcsKey], { maxNativeZoom: 7, maxZoom: 12 } as any)
-        if (activeLens === 'us') mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+        setTileFromUrl(GCS_TILE_SETS[gcsKey], { maxNativeZoom: 7, maxZoom: 12 } as any)
+        if (activeLens === 'us') mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         setTileLoadTime(Math.round(performance.now() - t0))
         setActiveTileSource(sourceLabel)
         setLoading(false)
@@ -1113,16 +1225,16 @@ export default function App() {
           const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
           url = `${GEE_PROXY}/api/snow/tiles/snodas?date=${yesterday.toISOString().slice(0,10)}&band=${varCfg.snodasBand}&palette=${colorRamp}`
           sourceLabel = 'GEE Proxy → SNODAS 1km (live, current day)'
-          mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+          mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         } else if (dataSource === 'gee-era5') {
           url = `${GEE_PROXY}/api/snow/tiles/era5?year=2024&month=${String(month).padStart(2,'0')}&band=${varCfg.era5Band}&palette=${colorRamp}`
           sourceLabel = 'GEE Proxy → ERA5-Land 9km (live)'
-          mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+          mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         } else {
           const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
           url = `${GEE_PROXY}/api/snow/tiles/snodas?date=${yesterday.toISOString().slice(0,10)}&band=${varCfg.snodasBand}&palette=${colorRamp}`
           sourceLabel = 'GEE Proxy → SNODAS 1km (live, current day)'
-          mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+          mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         }
       } else if (effectiveTab === 'changing') {
         const startYear = timeRange === '5' ? 2019 : timeRange === '10' ? 2014 : timeRange === '20' ? 2004 : 1980
@@ -1132,7 +1244,7 @@ export default function App() {
         } else {
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
           sourceLabel = `GEE Proxy → ERA5-Land US trend (${startYear}–2024)`
-          mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+          mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         }
       } else if (effectiveTab === 'shifting') {
         if (activeLens === 'global' || activeLens === 'us') {
@@ -1188,12 +1300,12 @@ export default function App() {
           }
           // Still try MODIS onset trend as background map
           url = `${GEE_PROXY}/api/snow/trends/modis?metric=onset_trend&startYear=2001&endYear=2024&palette=${colorRamp}`
-          if (activeLens === 'us') mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+          if (activeLens === 'us') mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         }
       } else if (effectiveTab === 'season') {
         const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
         url = `${GEE_PROXY}/api/snow/tiles/snodas?date=${yesterday.toISOString().slice(0,10)}&band=${varCfg.snodasBand}&palette=${colorRamp}`
-        mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+        mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
       }
 
       if (url) {
@@ -1206,7 +1318,7 @@ export default function App() {
             const resp = await fetch(url)
             if (!resp.ok) { lastErr = `HTTP ${resp.status}`; attempts++; continue }
             const data = await resp.json()
-            if (data.tileUrl) { await setTileFromUrl(data.tileUrl); lastErr = ''; break }
+            if (data.tileUrl) { setTileFromUrl(data.tileUrl); lastErr = ''; break }
             else { lastErr = data.error || 'No tile URL returned'; attempts++ }
           } catch (e: any) { lastErr = e.message; attempts++ }
           if (attempts < 2) await new Promise(r => setTimeout(r, 2000))
@@ -1304,7 +1416,7 @@ export default function App() {
       let fetchUrl: string
       if (activeLens === 'us') {
         fetchUrl = `${GEE_PROXY}/api/snow/animation/snodas?startYear=2015&endYear=2024&band=${varCfg.snodasBand}`
-        mapInstanceRef.current?.flyTo([39, -98], 4, { duration: 1.5 })
+        mapInstanceRef.current?.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
       } else {
         fetchUrl = `${GEE_PROXY}/api/snow/animation/era5?startYear=2015&endYear=2024&month=${String(month).padStart(2,'0')}&band=${varCfg.era5Band}`
       }
@@ -1315,37 +1427,23 @@ export default function App() {
     } catch { setTimelapseFrames([]); setAnimLoading(false) }
   }, [activeLens])
 
-  // Smooth crossfade between animation frames (Issue 4)
+  // Swap animation frame tiles
   useEffect(() => {
     if (!timelapseActive || !timelapseFrames.length || !mapInstanceRef.current) return
     const frame = timelapseFrames[timelapseIdx]
     if (!frame?.tileUrl) return
-    ;(async () => {
-      const L = (await import('leaflet')).default
-      const map = mapInstanceRef.current
-      if (!map) return
-      // Create next layer with opacity 0
-      const nextLayer = L.tileLayer(frame.tileUrl, { opacity: 0, maxZoom: 12, errorTileUrl: '' })
-      nextLayer.addTo(map)
-      // Fade in new, fade out old
-      const container = nextLayer.getContainer?.()
-      if (container) {
-        container.style.transition = 'opacity 0.4s ease'
-        requestAnimationFrame(() => { container.style.opacity = '0.75' })
-      } else {
-        nextLayer.setOpacity(0.75)
-      }
-      if (tileLayerRef.current) {
-        const oldContainer = tileLayerRef.current.getContainer?.()
-        if (oldContainer) {
-          oldContainer.style.transition = 'opacity 0.4s ease'
-          oldContainer.style.opacity = '0'
-        }
-        const oldLayer = tileLayerRef.current
-        setTimeout(() => { try { map.removeLayer(oldLayer) } catch {} }, 500)
-      }
-      tileLayerRef.current = nextLayer
-    })()
+    const map = mapInstanceRef.current
+    const newId = `anim-tile-${++tileIdCounterRef.current}`
+    // Add new layer
+    map.addSource(newId, { type: 'raster', tiles: [frame.tileUrl], tileSize: 256, maxzoom: 12 })
+    map.addLayer({ id: newId, type: 'raster', source: newId, paint: { 'raster-opacity': 0.75 } })
+    // Remove old animation layer
+    const oldId = animTileIdRef.current
+    if (oldId) {
+      try { if (map.getLayer(oldId)) map.removeLayer(oldId) } catch {}
+      try { if (map.getSource(oldId)) map.removeSource(oldId) } catch {}
+    }
+    animTileIdRef.current = newId
   }, [timelapseIdx, timelapseActive, timelapseFrames])
 
   useEffect(() => { playRef.current = playing }, [playing])
@@ -1494,6 +1592,9 @@ export default function App() {
             <button onClick={() => setShowInfoModal(true)}
               className="snow-panel rounded-full w-9 h-9 flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform cursor-pointer"
               title="Data source info" style={{ color: '#0369a1' }}>i</button>
+            <button onClick={() => setShowAbout(true)}
+              className="snow-panel rounded-xl px-3 h-9 flex items-center justify-center text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
+              title="About this project" style={{ color: '#0369a1' }}>About</button>
           </div>
         </div>
 
@@ -2001,6 +2102,176 @@ export default function App() {
       )}
 
       </>)}
+
+      {/* ═══ ABOUT OVERLAY ═══ */}
+      {showAbout && (
+        <div className="absolute inset-0 z-[3000] overflow-y-auto" style={{ background: '#ffffff' }}>
+          <div className="max-w-3xl mx-auto px-6 py-10">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-2xl font-bold" style={{ color: '#0f172a' }}>About Snow Tracker</h1>
+              <button onClick={() => setShowAbout(false)} className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold hover:bg-slate-100 transition-colors" style={{ color: '#64748b' }}>✕</button>
+            </div>
+
+            <p className="text-sm leading-relaxed mb-8" style={{ color: '#475569' }}>
+              Snow Tracker is a story-driven dashboard for understanding global and US snowfall patterns, trends, and season shifts.
+              It combines satellite-derived datasets with ground-truth SNOTEL station measurements to answer three questions:
+              Where does it snow most? Is snowfall changing? Are snow seasons shifting?
+            </p>
+
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f172a' }}>Current Datasets</h2>
+
+            {/* Daymet */}
+            <div className="mb-6 p-5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <h3 className="text-sm font-bold mb-2" style={{ color: '#0369a1' }}>Daymet V4 (US Detail)</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs" style={{ color: '#475569' }}>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Provider:</span> NASA ORNL DAAC</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Resolution:</span> 1 km daily</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Coverage:</span> CONUS, 1980-present</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Collection:</span> NASA/ORNL/DAYMET_V4</div>
+              </div>
+              <p className="text-xs mt-3 leading-relaxed" style={{ color: '#64748b' }}>
+                High-resolution daily surface weather data interpolated from ground stations. Used here for average annual maximum SWE (snow water equivalent)
+                and long-term snowfall trend analysis (2004-2024). Pre-rendered as XYZ tiles on Google Cloud Storage at zoom levels 0-7.
+              </p>
+              <div className="mt-3 text-xs" style={{ color: '#94a3b8' }}>
+                <span className="font-semibold">Bands used:</span> SWE (kg/m²), prcp + tmin for snowfall estimation |
+                <span className="font-semibold"> Tile format:</span> GCS XYZ PNGs (pre-computed from COGs via gdal2tiles)
+              </div>
+            </div>
+
+            {/* ERA5 */}
+            <div className="mb-6 p-5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <h3 className="text-sm font-bold mb-2" style={{ color: '#0369a1' }}>ERA5-Land (Global)</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs" style={{ color: '#475569' }}>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Provider:</span> ECMWF / Copernicus</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Resolution:</span> 9 km (~0.1°)</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Coverage:</span> Global, 1950-present</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Collection:</span> ECMWF/ERA5_LAND/MONTHLY_AGGR</div>
+              </div>
+              <p className="text-xs mt-3 leading-relaxed" style={{ color: '#64748b' }}>
+                Reanalysis dataset combining model data with global observations. Provides the global snowfall view and long-term global trend analysis.
+                Served via live GEE proxy (Cloud Run) for dynamic tile generation with configurable color ramps and time ranges.
+              </p>
+              <div className="mt-3 text-xs" style={{ color: '#94a3b8' }}>
+                <span className="font-semibold">Bands used:</span> snowfall_sum (m of water equivalent), snow_depth (m) |
+                <span className="font-semibold"> Delivery:</span> Live GEE tile proxy (Cloud Run)
+              </div>
+            </div>
+
+            {/* MODIS */}
+            <div className="mb-6 p-5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <h3 className="text-sm font-bold mb-2" style={{ color: '#0369a1' }}>MODIS Snow Cover (Season Timing)</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs" style={{ color: '#475569' }}>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Provider:</span> NASA LP DAAC</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Resolution:</span> 500 m daily</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Coverage:</span> Global, 2000-present</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Collection:</span> MODIS/061/MOD10A1</div>
+              </div>
+              <p className="text-xs mt-3 leading-relaxed" style={{ color: '#64748b' }}>
+                Daily fractional snow cover from Terra satellite. Used to compute average snow days per year and detect shifts in season timing
+                (earlier melt-out, later onset). Pre-rendered tiles for the "Is the season shifting?" question.
+              </p>
+              <div className="mt-3 text-xs" style={{ color: '#94a3b8' }}>
+                <span className="font-semibold">Bands used:</span> NDSI_Snow_Cover (0-100%) |
+                <span className="font-semibold"> Tile format:</span> GCS XYZ PNGs
+              </div>
+            </div>
+
+            {/* SNODAS */}
+            <div className="mb-6 p-5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <h3 className="text-sm font-bold mb-2" style={{ color: '#0369a1' }}>SNODAS (US Near-Real-Time)</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs" style={{ color: '#475569' }}>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Provider:</span> NOHRSC / NWS</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Resolution:</span> 1 km daily</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Coverage:</span> CONUS, 2003-present</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Collection:</span> projects/climate-engine/snodas/daily</div>
+              </div>
+              <p className="text-xs mt-3 leading-relaxed" style={{ color: '#64748b' }}>
+                Snow Data Assimilation System — modeled + observed snow analysis. Available as an alternative data source in Explorer Mode
+                for current-condition US snow views. Served via live GEE proxy.
+              </p>
+              <div className="mt-3 text-xs" style={{ color: '#94a3b8' }}>
+                <span className="font-semibold">Bands used:</span> SWE, Snow_Depth |
+                <span className="font-semibold"> Delivery:</span> Live GEE tile proxy
+              </div>
+            </div>
+
+            {/* SNOTEL */}
+            <div className="mb-6 p-5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <h3 className="text-sm font-bold mb-2" style={{ color: '#0369a1' }}>SNOTEL Stations (Ground Truth)</h3>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs" style={{ color: '#475569' }}>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Provider:</span> USDA NRCS</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Resolution:</span> Point stations</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Coverage:</span> Western US, ~900 stations</div>
+                <div><span className="font-semibold" style={{ color: '#0f172a' }}>Source:</span> wcc.sc.egov.usda.gov</div>
+              </div>
+              <p className="text-xs mt-3 leading-relaxed" style={{ color: '#64748b' }}>
+                Automated snow measurement stations in mountain watersheds. Provides daily SWE, snow depth, and temperature. Used as ground truth
+                in the "My Mountain" lens for each question — showing hydrographs, period-of-record trend analysis, peak SWE trends,
+                season onset/melt timing shifts, and comparison to nearby stations. Data accessed via Cloud Run proxy (USDA API lacks CORS).
+              </p>
+              <div className="mt-3 text-xs" style={{ color: '#94a3b8' }}>
+                <span className="font-semibold">Metrics derived:</span> Peak SWE trend (in/decade), onset/melt-out DOWY, season length change, percentile ranking |
+                <span className="font-semibold"> Period of record:</span> Station-dependent (typically 20-40+ years)
+              </div>
+            </div>
+
+            <h2 className="text-lg font-semibold mb-4 mt-10" style={{ color: '#0f172a' }}>Future Data (Planned)</h2>
+
+            <div className="space-y-4 mb-8">
+              <div className="p-4 rounded-xl" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>VIIRS Snow Cover (NOAA-20/21)</h4>
+                <p className="text-xs" style={{ color: '#64748b' }}>Next-generation snow cover at 375m resolution, successor to MODIS. Would improve season timing accuracy.</p>
+              </div>
+              <div className="p-4 rounded-xl" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>Sentinel-1 SAR Snow Wetness</h4>
+                <p className="text-xs" style={{ color: '#64748b' }}>C-band radar penetrates clouds to detect wet vs dry snow — valuable for melt-onset detection independent of optical conditions.</p>
+              </div>
+              <div className="p-4 rounded-xl" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>UA SWE (University of Arizona)</h4>
+                <p className="text-xs" style={{ color: '#64748b' }}>4km gridded SWE product combining SNOTEL + PRISM + physiographic predictors. Best available gridded SWE for CONUS — would bridge the gap between point SNOTEL and coarser model data.</p>
+              </div>
+              <div className="p-4 rounded-xl" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>CMIP6 Climate Projections</h4>
+                <p className="text-xs" style={{ color: '#64748b' }}>Future snowfall projections under SSP scenarios (2030-2100). Would add a forward-looking dimension to the trend analysis.</p>
+              </div>
+              <div className="p-4 rounded-xl" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>PMTiles Migration</h4>
+                <p className="text-xs" style={{ color: '#64748b' }}>Converting existing XYZ tile pyramids to single-file PMTiles archives for faster loading and simpler hosting. Protocol already registered — awaiting full pipeline completion.</p>
+              </div>
+            </div>
+
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f172a' }}>Pipeline Architecture</h2>
+            <div className="p-5 rounded-2xl mb-8" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div className="text-xs font-mono leading-loose" style={{ color: '#475569' }}>
+                <div className="mb-2"><span className="font-bold" style={{ color: '#0369a1' }}>Static tiles (fast):</span></div>
+                <div className="ml-4">GEE ImageCollection → ee.Image.getThumbURL() → COG export → gdalwarp (EPSG:3857) → gdal2tiles (z0-7) → GCS bucket → MapLibre raster source</div>
+                <div className="mt-4 mb-2"><span className="font-bold" style={{ color: '#0369a1' }}>Live tiles (dynamic):</span></div>
+                <div className="ml-4">Client request → Cloud Run (Flask + earthengine-api) → ee.Image.getMapId() → GEE tile server → MapLibre raster source</div>
+                <div className="mt-4 mb-2"><span className="font-bold" style={{ color: '#0369a1' }}>SNOTEL data:</span></div>
+                <div className="ml-4">Pre-computed JSON (bulk stations) + Cloud Run proxy (individual station POR) → USDA NRCS Report Generator API → Client-side trend analysis</div>
+              </div>
+            </div>
+
+            <h2 className="text-lg font-semibold mb-4" style={{ color: '#0f172a' }}>Technical Stack</h2>
+            <div className="grid grid-cols-2 gap-4 mb-8 text-xs" style={{ color: '#475569' }}>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Frontend:</span> React + TypeScript + Vite</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Maps:</span> MapLibre GL JS</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Charts:</span> Recharts</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Tiles:</span> GCS + PMTiles protocol</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Backend:</span> Cloud Run (Flask + GEE)</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Data engine:</span> Google Earth Engine</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Hosting:</span> GitHub Pages</div>
+              <div><span className="font-semibold" style={{ color: '#0f172a' }}>Basemap:</span> CARTO Dark Matter</div>
+            </div>
+
+            <div className="text-center pt-4 pb-8" style={{ borderTop: '1px solid #e2e8f0' }}>
+              <p className="text-xs" style={{ color: '#94a3b8' }}>Built by Quintin Tyree | <a href="https://tyreespatial.com" target="_blank" rel="noopener" className="underline" style={{ color: '#0369a1' }}>tyreespatial.com</a></p>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
