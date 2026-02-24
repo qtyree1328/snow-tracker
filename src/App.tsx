@@ -15,8 +15,8 @@ type TimeRange = '5' | '10' | '20' | 'all'
 const GEE_PROXY = 'https://gee-proxy-787413290356.us-east1.run.app'
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-// Use local CC proxy for SNOTEL (USDA blocks Cloud Run IPs)
-const SNOTEL_BULK_URL = '/api/snotel?type=stations'
+// SNOTEL via Cloud Run proxy (USDA has no CORS headers)
+const SNOTEL_BULK_URL = `${GEE_PROXY}/api/snow/snotel/stations`
 
 interface SnotelStation {
   id: string; name: string; state: string; elevation: number
@@ -155,9 +155,9 @@ function dowyToDate(dowy: number, wyYear: number): string {
 }
 
 const SNOW_VAR_CONFIG: Record<string, { era5Band: string; snodasBand: string; label: string; unit: string }> = {
-  snowfall:   { era5Band: 'snowfall_sum', snodasBand: 'Snowfall',   label: 'Snowfall',   unit: 'mm' },
+  snowfall:   { era5Band: 'snowfall_sum', snodasBand: 'SWE',        label: 'Snowfall',   unit: 'mm' }, // SNODAS has no Snowfall band; SWE as proxy
   snow_depth: { era5Band: 'snow_depth',   snodasBand: 'Snow_Depth', label: 'Snow Depth', unit: 'm' },
-  snow_cover: { era5Band: 'snow_cover',   snodasBand: 'SWE',        label: 'Snow Cover', unit: '%' }, // SNODAS has no cover band; use SWE as proxy for US
+  snow_cover: { era5Band: 'snow_cover',   snodasBand: 'SWE',        label: 'Snow Cover', unit: '%' }, // SNODAS has no cover band; use SWE as proxy
 }
 
 function parseCSV(text: string): string[][] {
@@ -727,7 +727,7 @@ function getAvailableRamps(tab: string): { key: string; label: string; gradient:
 // ═══════════════════════════════════════════════════════════════════════
 export default function App() {
   const [activeTab, setActiveTab] = useState<StoryTab>('where')
-  const [activeLens, setActiveLens] = useState<Lens>('global')
+  const [activeLens, setActiveLens] = useState<Lens>('us')
   const [timeRange, setTimeRange] = useState<TimeRange>('20')
   const [snowVar, setSnowVar] = useState<'snowfall' | 'snow_depth' | 'snow_cover'>('snowfall')
 
@@ -820,7 +820,7 @@ export default function App() {
   // LOAD GRID STATS
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
-    fetch('/data/snow/grid_stats.json').then(r => r.json())
+    fetch(import.meta.env.BASE_URL + 'data/snow/grid_stats.json').then(r => r.json())
       .then(data => { gridStatsRef.current = data; setGridStatsLoaded(true) }).catch(() => {})
   }, [])
 
@@ -830,22 +830,45 @@ export default function App() {
   useEffect(() => {
     if (!isMountainLens || snotelLoaded) return
     setSnotelLoading(true)
-    fetch(SNOTEL_BULK_URL).then(r => r.text()).then(text => {
-      const rows = parseCSV(text)
-      const headerIdx = rows.findIndex(r => r[0]?.toLowerCase().includes('station id'))
-      const dataRows = headerIdx >= 0 ? rows.slice(headerIdx + 1) : rows.slice(1)
-      const parsed: SnotelStation[] = dataRows
-        .filter(r => r.length >= 8 && r[4] && r[5])
-        .map(r => ({
-          id: r[0]?.trim(), name: r[1]?.trim(), state: r[2]?.trim(),
-          elevation: parseFloat(r[3]) || 0, lat: parseFloat(r[4]) || 0, lon: parseFloat(r[5]) || 0,
-          swe: r[6]?.trim() ? parseFloat(r[6]) : null, pctMedian: r[7]?.trim() ? parseFloat(r[7]) : null,
-        }))
-        .filter(s => s.lat !== 0 && s.lon !== 0 && s.id)
+    // Load from pre-computed static JSON (fast, no CORS issues)
+    const base = import.meta.env.BASE_URL
+    Promise.all([
+      fetch(base + 'data/snow/snotel_stations.json').then(r => r.json()),
+      fetch(base + 'data/snow/snotel_current.json').then(r => r.json()),
+    ]).then(([stations, current]: [any[], any]) => {
+      const currentMap = current.stations || {}
+      const parsed: SnotelStation[] = stations
+        .filter((s: any) => s.lat && s.lon && s.triplet)
+        .map((s: any) => {
+          const cur = currentMap[s.triplet] || {}
+          return {
+            id: s.triplet.split(':')[0], name: s.name, state: s.state,
+            elevation: s.elevation || 0, lat: s.lat, lon: s.lon,
+            swe: cur.swe ?? null, pctMedian: cur.pctMedian ?? null,
+          }
+        })
       setSnotelStations(parsed)
       setSnotelLoaded(true)
       setSnotelLoading(false)
-    }).catch(() => setSnotelLoading(false))
+    }).catch(() => {
+      // Fallback: try Cloud Run proxy for live USDA data
+      fetch(SNOTEL_BULK_URL).then(r => r.text()).then(text => {
+        const rows = parseCSV(text)
+        const headerIdx = rows.findIndex(r => r[0]?.toLowerCase().includes('station id'))
+        const dataRows = headerIdx >= 0 ? rows.slice(headerIdx + 1) : rows.slice(1)
+        const parsed: SnotelStation[] = dataRows
+          .filter(r => r.length >= 8 && r[4] && r[5])
+          .map(r => ({
+            id: r[0]?.trim(), name: r[1]?.trim(), state: r[2]?.trim(),
+            elevation: parseFloat(r[3]) || 0, lat: parseFloat(r[4]) || 0, lon: parseFloat(r[5]) || 0,
+            swe: r[6]?.trim() ? parseFloat(r[6]) : null, pctMedian: r[7]?.trim() ? parseFloat(r[7]) : null,
+          }))
+          .filter(s => s.lat !== 0 && s.lon !== 0 && s.id)
+        setSnotelStations(parsed)
+        setSnotelLoaded(true)
+        setSnotelLoading(false)
+      }).catch(() => setSnotelLoading(false))
+    })
   }, [isMountainLens, snotelLoaded])
 
   const filteredStations = useMemo(() => {
@@ -966,7 +989,7 @@ export default function App() {
     try {
       const { start, end } = waterYearDates()
       const triplet = `${station.id}:${station.state}:SNTL`
-      const url = `/api/snotel?type=station&triplet=${triplet}&start=${start}&end=${end}&elements=WTEQ::value,WTEQ::median_1991,WTEQ::pctOfMedian_1991`
+      const url = `${GEE_PROXY}/api/snow/snotel/station/${encodeURIComponent(triplet)}?start=${start}&end=${end}&elements=WTEQ::value,WTEQ::median_1991,WTEQ::pctOfMedian_1991`
       const resp = await fetch(url)
       const text = await resp.text()
       const dataRows = parseCSV(text).filter(r => r[0]?.match(/^\d{4}-\d{2}-\d{2}$/))
@@ -987,7 +1010,7 @@ export default function App() {
       let porData = porCacheRef.current[cacheKey]
       if (!porData) {
         const triplet = `${station.id}:${station.state}:SNTL`
-        const url = `/api/snotel?type=por&triplet=${triplet}`
+        const url = `${GEE_PROXY}/api/snow/snotel/por/${encodeURIComponent(triplet)}`
         const resp = await fetch(url)
         const text = await resp.text()
         const dataRows = parseCSV(text).filter(r => r[0]?.match(/^\d{4}-\d{2}-\d{2}$/))
@@ -1429,9 +1452,9 @@ export default function App() {
       {/* ─── TOP BAR: Nav + Narrative ─── z-index: 1000 */}
       <div className="absolute top-0 left-0 right-0 z-[1000] pointer-events-none">
         <div className="flex items-start justify-between p-4 pointer-events-auto">
-          {/* Left: Hub link (only when inside Command Center) */}
+          {/* Left: Hub link (only when inside Command Center on port 3000) */}
           <div>
-            {window.location.pathname.startsWith('/snow') && (
+            {window.location.port === '3000' && (
               <a href="/" className="snow-panel rounded-xl px-3 py-2 text-sm inline-flex items-center gap-1.5" style={{ color: '#0369a1' }}>Hub</a>
             )}
           </div>
@@ -1706,7 +1729,7 @@ export default function App() {
             {(effectiveTab === 'where' || effectiveTab === 'season') && !isMountainLens ? (
               <div className="text-xs">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-medium" style={{ color: '#334155' }}>{effectiveTab === 'season' || activeLens === 'us' ? 'Snow Depth' : 'Snowfall'}</span>
+                  <span className="font-medium" style={{ color: '#334155' }}>{SNOW_VAR_CONFIG[snowVar].label}</span>
                   <span className="text-[10px]" style={{ color: '#0369a1' }}>{legendExpanded ? 'Collapse' : 'Ramps'}</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ background: getRampGradient(colorRamp, 'where') }} />
