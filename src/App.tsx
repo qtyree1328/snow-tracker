@@ -785,6 +785,12 @@ export default function App() {
   // Color ramp (Issue 4)
   type ColorRamp = 'cool_blues' | 'arctic' | 'warm_snow' | 'viridis' | 'plasma' | 'deep_purple' | 'red_blue' | 'brown_green' | 'spectral' | 'coolwarm' | 'orange_teal' | 'piyg'
   const [colorRamp, setColorRamp] = useState<ColorRamp>('cool_blues')
+
+  // ── TEMPORARY EVAL MODE ──
+  const [evalMode, setEvalMode] = useState(false)
+  const [dataSource, setDataSource] = useState<'auto' | 'gcs' | 'gee-era5' | 'gee-snodas' | 'gee-daymet'>('auto')
+  const [tileLoadTime, setTileLoadTime] = useState<number | null>(null)
+  const [activeTileSource, setActiveTileSource] = useState<string>('')
   const [legendExpanded, setLegendExpanded] = useState(false)
 
   // Story flow
@@ -1044,14 +1050,24 @@ export default function App() {
       'shifting-us-snowfall': `${GCS_TILES}/modis_snow_days/{z}/{x}/{y}.png`,
     }
 
+    const t0 = performance.now()
+    let sourceLabel = ''
+
     try {
       let url: string | null = null
+      let sourceLabel = ''
 
-      // Try GCS tiles first for supported combos
+      // GCS tiles — pre-rendered, instant, but static color ramp
       const gcsKey = `${effectiveTab}-${activeLens}-${snowVar}`
-      if (GCS_TILE_SETS[gcsKey]) {
+      const useGCS = GCS_TILE_SETS[gcsKey] && (dataSource === 'auto' || dataSource === 'gcs')
+      const forceGEE = dataSource === 'gee-era5' || dataSource === 'gee-snodas' || dataSource === 'gee-daymet'
+
+      if (useGCS && !forceGEE) {
+        sourceLabel = `GCS Tiles (pre-rendered ${gcsKey.includes('daymet') || effectiveTab === 'where' ? 'Daymet 1km' : effectiveTab === 'shifting' ? 'MODIS 500m' : 'Daymet 1km'})`
         await setTileFromUrl(GCS_TILE_SETS[gcsKey], { maxNativeZoom: 7, maxZoom: 12 } as any)
         if (activeLens === 'us') mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+        setTileLoadTime(Math.round(performance.now() - t0))
+        setActiveTileSource(sourceLabel)
         setLoading(false)
         return
       }
@@ -1059,17 +1075,30 @@ export default function App() {
       if (effectiveTab === 'where') {
         if (activeLens === 'global') {
           url = `${GEE_PROXY}/api/snow/tiles/era5?year=2024&month=${String(month).padStart(2,'0')}&band=${varCfg.era5Band}&palette=${colorRamp}`
+          sourceLabel = 'GEE Proxy → ERA5-Land 9km (live)'
+        } else if (dataSource === 'gee-snodas') {
+          const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
+          url = `${GEE_PROXY}/api/snow/tiles/snodas?date=${yesterday.toISOString().slice(0,10)}&band=${varCfg.snodasBand}&palette=${colorRamp}`
+          sourceLabel = 'GEE Proxy → SNODAS 1km (live, current day)'
+          mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+        } else if (dataSource === 'gee-era5') {
+          url = `${GEE_PROXY}/api/snow/tiles/era5?year=2024&month=${String(month).padStart(2,'0')}&band=${varCfg.era5Band}&palette=${colorRamp}`
+          sourceLabel = 'GEE Proxy → ERA5-Land 9km (live)'
+          mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
         } else {
           const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
           url = `${GEE_PROXY}/api/snow/tiles/snodas?date=${yesterday.toISOString().slice(0,10)}&band=${varCfg.snodasBand}&palette=${colorRamp}`
+          sourceLabel = 'GEE Proxy → SNODAS 1km (live, current day)'
           mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
         }
       } else if (effectiveTab === 'changing') {
         const startYear = timeRange === '5' ? 2019 : timeRange === '10' ? 2014 : timeRange === '20' ? 2004 : 1980
         if (activeLens === 'global') {
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
+          sourceLabel = `GEE Proxy → ERA5-Land trend (${startYear}–2024)`
         } else {
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
+          sourceLabel = `GEE Proxy → ERA5-Land US trend (${startYear}–2024)`
           mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
         }
       } else if (effectiveTab === 'shifting') {
@@ -1152,8 +1181,10 @@ export default function App() {
         if (lastErr && !suppressError) setTileError(lastErr)
       }
     } catch (e: any) { setTileError(e.message) }
+    setTileLoadTime(Math.round(performance.now() - t0))
+    setActiveTileSource(sourceLabel || 'GEE Proxy')
     setLoading(false)
-  }, [effectiveTab, activeLens, timeRange, isMountainLens, snotelStations, colorRamp, shiftingPeriod, gridStatsLoaded, snowVar])
+  }, [effectiveTab, activeLens, timeRange, isMountainLens, snotelStations, colorRamp, shiftingPeriod, gridStatsLoaded, snowVar, dataSource])
 
   useEffect(() => {
     if (mapReady && !timelapseActive) loadDataForView()
@@ -1434,6 +1465,60 @@ export default function App() {
         </div>
 
       </div>
+
+      {/* ── TEMPORARY EVAL PANEL ── */}
+      {!showHero && (
+        <div style={{ position: 'fixed', right: 16, top: 120, zIndex: 1100 }}>
+          <button onClick={() => setEvalMode(!evalMode)}
+            style={{ background: evalMode ? '#0369a1' : '#fff', color: evalMode ? '#fff' : '#0369a1', border: '1px solid #0369a1', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            {evalMode ? 'Close Eval' : 'Eval Mode'}
+          </button>
+          {evalMode && (
+            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 16, marginTop: 8, width: 320, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Data Source Evaluation</div>
+
+              {/* Current status */}
+              <div style={{ background: '#f8fafc', borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 11 }}>
+                <div style={{ color: '#64748b', marginBottom: 4 }}>Currently showing:</div>
+                <div style={{ color: '#0f172a', fontWeight: 600 }}>{activeTileSource || 'None'}</div>
+                {tileLoadTime !== null && (
+                  <div style={{ color: tileLoadTime < 500 ? '#16a34a' : tileLoadTime < 2000 ? '#d97706' : '#dc2626', marginTop: 4, fontWeight: 600 }}>
+                    Load time: {tileLoadTime}ms
+                  </div>
+                )}
+              </div>
+
+              {/* Source selector */}
+              <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Switch source:</div>
+              {[
+                { key: 'auto' as const, label: 'Auto (best available)', desc: 'GCS tiles when available, GEE proxy fallback' },
+                { key: 'gcs' as const, label: 'GCS Pre-rendered Tiles', desc: 'Daymet 1km / MODIS 500m, static color ramp, instant load. Only US views for snowfall variable.' },
+                { key: 'gee-era5' as const, label: 'GEE Proxy → ERA5-Land', desc: '9km global reanalysis, live computation, custom color ramps. Slower but flexible.' },
+                { key: 'gee-snodas' as const, label: 'GEE Proxy → SNODAS', desc: '1km US model assimilation, current day only, live computation.' },
+              ].map(opt => (
+                <button key={opt.key} onClick={() => setDataSource(opt.key)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', marginBottom: 4,
+                    background: dataSource === opt.key ? '#e0f2fe' : '#fff',
+                    border: `1px solid ${dataSource === opt.key ? '#0369a1' : '#e2e8f0'}`,
+                    borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
+                  }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: dataSource === opt.key ? '#0369a1' : '#334155' }}>{opt.label}</div>
+                  <div style={{ fontSize: 10, color: '#64748b', marginTop: 2, lineHeight: 1.3 }}>{opt.desc}</div>
+                </button>
+              ))}
+
+              {/* Comparison guide */}
+              <div style={{ marginTop: 12, padding: 10, background: '#f0f9ff', borderRadius: 8, fontSize: 10, lineHeight: 1.5, color: '#334155' }}>
+                <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 11 }}>What to compare:</div>
+                <div><b>GCS tiles</b> = pre-rendered PNGs on Google Cloud Storage. Fast (no server computation), but fixed color ramp and only available for US snowfall views.</div>
+                <div style={{ marginTop: 4 }}><b>GEE Proxy</b> = live computation via Google Earth Engine. Slower first load, but supports any band, time range, color ramp, and click-for-time-series.</div>
+                <div style={{ marginTop: 4 }}><b>ERA5 vs SNODAS vs Daymet:</b> ERA5 = 9km global reanalysis (coarser, global). SNODAS = 1km US model (current conditions). Daymet = 1km US 45yr record (best for long-term US trends).</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Left vertical progress bar — guided mode only */}
       {isGuided && (
