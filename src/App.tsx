@@ -400,6 +400,15 @@ const snowCSS = `
 .tab-active { background: #0369a1; color: #fff; border: none; }
 .tab-inactive { color: #475569; }
 .tab-inactive:hover { color: #0f172a; background: #f1f5f9; }
+
+/* Force dark bg on map container */
+.leaflet-container { background: #0f172a !important; }
+
+/* ─── Mobile Responsive ─── */
+@media (max-width: 640px) {
+  .snow-next { padding: 14px 24px; font-size: 14px; border-radius: 10px; }
+  .snow-panel { padding: 6px !important; }
+}
 `
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -726,6 +735,7 @@ function getAvailableRamps(tab: string): { key: string; label: string; gradient:
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════
 export default function App() {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
   const [activeTab, setActiveTab] = useState<StoryTab>('where')
   const [activeLens, setActiveLens] = useState<Lens>('us')
   const [timeRange, setTimeRange] = useState<TimeRange>('20')
@@ -895,7 +905,7 @@ export default function App() {
       const L = (await import('leaflet')).default
       await import('leaflet/dist/leaflet.css')
       if (cancelled || !mapRef.current) return
-      const map = L.map(mapRef.current, { center: [40, -30], zoom: 3, zoomControl: false, attributionControl: false })
+      const map = L.map(mapRef.current, { center: isMobile ? [39, -98] : [40, -30], zoom: isMobile ? 4 : 3, zoomControl: false, attributionControl: false })
       const base = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map)
       baseTileRef.current = base
       L.control.zoom({ position: 'bottomright' }).addTo(map)
@@ -1451,7 +1461,7 @@ export default function App() {
 
       {/* ─── TOP BAR: Nav + Narrative ─── z-index: 1000 */}
       <div className="absolute top-0 left-0 right-0 z-[1000] pointer-events-none">
-        <div className="flex items-start justify-between p-4 pointer-events-auto">
+        <div className="flex items-start justify-between p-2 sm:p-4 pointer-events-auto">
           {/* Left: Hub link (only when inside Command Center on port 3000) */}
           <div>
             {window.location.port === '3000' && (
@@ -1460,19 +1470,19 @@ export default function App() {
           </div>
 
           {/* Center: Narrative bar */}
-          <div className="snow-panel rounded-2xl px-6 py-3 text-center max-w-xl">
+          <div className="snow-panel rounded-2xl px-4 sm:px-6 py-2 sm:py-3 text-center max-w-xl mx-auto">
             {isExplorerMode ? (
               <>
                 <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8' }}>Explorer Mode</div>
-                <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>Free Exploration</div>
+                <div className="text-base sm:text-lg font-semibold" style={{ color: '#0f172a' }}>Free Exploration</div>
               </>
             ) : (
               <>
                 <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: '#94a3b8' }}>
                   Step {currentStepIdx + 1} of {STORY_STEPS.length}
                 </div>
-                <div className="text-lg font-semibold" style={{ color: '#0f172a' }}>{currentTabConfig.question}</div>
-                <div className="text-sm mt-0.5" style={{ color: '#475569' }}>{heroText}</div>
+                <div className="text-base sm:text-lg font-semibold" style={{ color: '#0f172a' }}>{currentTabConfig.question}</div>
+                <div className="text-xs sm:text-sm mt-0.5 hidden sm:block" style={{ color: '#475569' }}>{heroText}</div>
               </>
             )}
             {loading && <div className="mt-1 flex items-center justify-center gap-2"><div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#0369a1' }} /><span className="text-xs" style={{ color: '#0369a1' }}>Loading...</span></div>}
@@ -1491,7 +1501,7 @@ export default function App() {
 
       {/* ── TEMPORARY EVAL PANEL ── */}
       {!showHero && (
-        <div style={{ position: 'fixed', right: 16, top: 120, zIndex: 1100 }}>
+        <div className="hidden sm:block" style={{ position: 'fixed', right: 16, top: 120, zIndex: 1100 }}>
           <button onClick={() => setEvalMode(!evalMode)}
             style={{ background: evalMode ? '#0369a1' : '#fff', color: evalMode ? '#fff' : '#0369a1', border: '1px solid #0369a1', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             {evalMode ? 'Close Eval' : 'Eval Mode'}
@@ -1543,9 +1553,9 @@ export default function App() {
         </div>
       )}
 
-      {/* Left vertical progress bar — guided mode only */}
+      {/* Left vertical progress bar — guided mode only, hidden on mobile */}
       {isGuided && (
-        <div style={{ position: 'fixed', left: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <div className="hidden sm:flex" style={{ position: 'fixed', left: 16, top: '50%', transform: 'translateY(-50%)', zIndex: 1000, flexDirection: 'column', gap: 8, alignItems: 'center' }}>
           {/* Connecting line behind dots */}
           <div style={{ position: 'absolute', top: 6, bottom: 6, left: '50%', transform: 'translateX(-50%)', width: 2, background: '#e2e8f0', borderRadius: 1 }} />
           {STORY_STEPS.map((step, i) => (
@@ -1566,8 +1576,8 @@ export default function App() {
 
       {/* ─── EXPLORER MODE CONTROLS ─── z-index: 900 */}
       {isExplorerMode && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[900] fade-in">
-          <div className="flex flex-col items-center gap-1.5">
+        <div className="absolute top-16 sm:top-24 left-1/2 -translate-x-1/2 z-[900] fade-in w-[calc(100%-24px)] sm:w-auto">
+          <div className="flex flex-col items-center gap-1 sm:gap-1.5">
             {/* Question selector */}
             <div className="snow-panel rounded-xl p-1 flex items-center gap-0.5">
               {(['where', 'changing', 'shifting', 'season'] as const).map(q => (
@@ -1618,8 +1628,8 @@ export default function App() {
 
       {/* ─── STATION SEARCH ─── z-index: 950 (above explorer controls, below top bar) */}
       {isMountainLens && (
-        <div className="absolute z-[950] fade-in" style={{ top: isExplorerMode ? 200 : 100, left: '50%', transform: 'translateX(-50%)' }}>
-          <div className="snow-panel rounded-xl px-4 py-2.5 w-80">
+        <div className="absolute z-[950] fade-in w-[calc(100%-32px)] sm:w-auto" style={{ top: isExplorerMode ? 200 : 80, left: '50%', transform: 'translateX(-50%)' }}>
+          <div className="snow-panel rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 w-full sm:w-80">
             {snotelLoading ? (
               <div className="flex items-center gap-2 text-sm" style={{ color: '#64748b' }}>
                 <div className="w-3 h-3 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0369a1', borderTopColor: 'transparent' }} />Loading stations...
@@ -1677,17 +1687,17 @@ export default function App() {
       )}
 
       {/* ─── BOTTOM LEFT: Animation controls ─── z-index: 800 */}
-      <div className="absolute bottom-24 left-4 z-[800] flex flex-col gap-2.5">
+      <div className="absolute bottom-16 sm:bottom-24 left-2 sm:left-4 z-[800] flex flex-col gap-2 sm:gap-2.5">
         {!isMountainLens && (
-          <div className="snow-panel rounded-xl px-4 py-3"
+          <div className="snow-panel rounded-xl px-2 sm:px-4 py-2 sm:py-3"
             onMouseEnter={() => setShowSpeedControl(true)} onMouseLeave={() => setShowSpeedControl(false)}>
             {!timelapseActive ? (
               <button onClick={startTimelapse} disabled={animLoading || effectiveTab === 'shifting'}
-                className="flex items-center gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" style={{ color: '#334155' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center transition-colors" style={{ background: '#0369a1', boxShadow: '0 2px 12px rgba(3,105,161,0.2)' }}>
-                  <span className="text-sm font-semibold text-white">Play</span>
+                className="flex items-center gap-1.5 sm:gap-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" style={{ color: '#334155' }}>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors" style={{ background: '#0369a1', boxShadow: '0 2px 12px rgba(3,105,161,0.2)' }}>
+                  <span className="text-xs sm:text-sm font-semibold text-white">Play</span>
                 </div>
-                <div><div className="text-xs font-medium" style={{ color: '#0f172a' }}>Animate</div><div className="text-[10px]" style={{ color: '#64748b' }}>2015 - 2024</div></div>
+                <div className="hidden sm:block"><div className="text-xs font-medium" style={{ color: '#0f172a' }}>Animate</div><div className="text-[10px]" style={{ color: '#64748b' }}>2015 - 2024</div></div>
               </button>
             ) : (
               <div className="space-y-2">
@@ -1723,9 +1733,9 @@ export default function App() {
       </div>
 
       {/* ─── BOTTOM RIGHT: Legend + Color Ramp ─── z-index: 800 */}
-      <div className="absolute bottom-24 right-4 z-[800]">
-        <div className="snow-panel rounded-2xl w-52 overflow-hidden transition-all duration-300">
-          <button onClick={() => setLegendExpanded(!legendExpanded)} className="w-full px-4 py-3 text-left cursor-pointer transition-colors hover:bg-slate-50">
+      <div className="absolute bottom-16 sm:bottom-24 right-2 sm:right-4 z-[800]">
+        <div className="snow-panel rounded-2xl w-40 sm:w-52 overflow-hidden transition-all duration-300">
+          <button onClick={() => setLegendExpanded(!legendExpanded)} className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left cursor-pointer transition-colors hover:bg-slate-50">
             {(effectiveTab === 'where' || effectiveTab === 'season') && !isMountainLens ? (
               <div className="text-xs">
                 <div className="flex items-center justify-between mb-1.5">
@@ -1787,8 +1797,8 @@ export default function App() {
 
       {/* ─── INFO PANEL ─── z-index: 850 (below top bar, above legend) */}
       {infoPanelOpen && (isMountainLens ? selectedStation : clickedPoint) && (
-        <div className="absolute top-20 right-4 z-[850] w-[400px] slide-up" style={{ maxHeight: 'calc(100vh - 140px)' }}>
-          <div className="snow-panel rounded-2xl overflow-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 160px)', boxShadow: '0 8px 40px rgba(3,105,161,0.08)' }}>
+        <div className="absolute top-16 sm:top-20 right-2 sm:right-4 left-2 sm:left-auto z-[850] sm:w-[400px] slide-up" style={{ maxHeight: 'calc(100vh - 100px)' }}>
+          <div className="snow-panel rounded-2xl overflow-hidden overflow-y-auto" style={{ maxHeight: 'calc(100vh - 120px)', boxShadow: '0 8px 40px rgba(3,105,161,0.08)' }}>
             {isMountainLens && selectedStation ? (
               <>
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
@@ -1909,7 +1919,7 @@ export default function App() {
 
       {/* Shifting Chart Panel */}
       {effectiveTab === 'shifting' && !isMountainLens && shiftingData.length > 0 && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[700] fade-in" style={{ width: 'min(600px, 90vw)' }}>
+        <div className="absolute bottom-16 sm:bottom-24 left-1/2 -translate-x-1/2 z-[700] fade-in" style={{ width: 'min(600px, calc(100vw - 16px))' }}>
           <div className="snow-panel rounded-2xl px-6 py-5" style={{ boxShadow: '0 8px 40px rgba(3,105,161,0.08)' }}>
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -1967,22 +1977,22 @@ export default function App() {
 
       {/* ═══ BIG NEXT BUTTON ═══ z-index: 900, fixed bottom center */}
       {!infoPanelOpen && !timelapseActive && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-3">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[900] flex items-center gap-2 sm:gap-3 w-[calc(100%-32px)] sm:w-auto justify-center">
           {isGuided && hasPrevStep && (
             <button onClick={() => goToStep(currentStepIdx - 1)}
-              className="snow-btn rounded-xl px-4 py-4 transition-all hover:scale-105"
+              className="snow-btn rounded-xl px-3 sm:px-4 py-3 sm:py-4 transition-all hover:scale-105"
               style={{ color: '#475569' }}>&larr;</button>
           )}
           {isGuided && hasNextStep && (
             <button onClick={() => goToStep(currentStepIdx + 1)}
-              className="snow-next flex items-center gap-3 transition-all hover:scale-105 group">
+              className="snow-next flex items-center gap-2 sm:gap-3 transition-all hover:scale-105 group whitespace-nowrap">
               <span>Next: {STORY_STEPS[currentStepIdx + 1]?.label}</span>
               <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
             </button>
           )}
           {isGuided && !hasNextStep && (
             <button onClick={enterExplorer}
-              className="snow-next flex items-center gap-3 transition-all hover:scale-105 group">
+              className="snow-next flex items-center gap-2 sm:gap-3 transition-all hover:scale-105 group whitespace-nowrap">
               <span>Enter Explorer Mode</span>
               <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
             </button>
