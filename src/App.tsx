@@ -1808,7 +1808,7 @@ export default function App() {
                       <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{selectedStation.state} · {selectedStation.elevation.toLocaleString()}' · ID {selectedStation.id}</div>
                     </div>
                     <button onClick={() => { setInfoPanelOpen(false); setSelectedStation(null); setAnalytics(null) }}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100" style={{ background: 'rgba(3,105,161,0.08)', color: '#64748b' }}>x</button>
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100 text-base sm:text-sm font-bold" style={{ background: 'rgba(3,105,161,0.08)', color: '#64748b' }}>✕</button>
                   </div>
                 </div>
                 <div className="px-5 py-3">
@@ -1833,7 +1833,7 @@ export default function App() {
                       <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{gridPointData ? 'Pre-computed' : 'Live query'}</div>
                     </div>
                     <button onClick={() => { setInfoPanelOpen(false); setClickedPoint(null) }}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100" style={{ background: 'rgba(3,105,161,0.08)', color: '#64748b' }}>x</button>
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors hover:bg-sky-100 text-base sm:text-sm font-bold" style={{ background: 'rgba(3,105,161,0.08)', color: '#64748b' }}>✕</button>
                   </div>
                 </div>
                 <div className="px-5 py-3">
@@ -1903,8 +1903,8 @@ export default function App() {
         return (
           <div className="absolute inset-0 z-[2000] flex items-center justify-center" onClick={() => setShowInfoModal(false)}>
             <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.25)' }} />
-            <div className="relative snow-panel rounded-3xl px-8 py-6 max-w-md" style={{ boxShadow: '0 8px 40px rgba(3,105,161,0.12)' }} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowInfoModal(false)} className="absolute top-3 right-4 text-lg" style={{ color: '#94a3b8' }}>x</button>
+            <div className="relative snow-panel rounded-3xl px-5 sm:px-8 py-5 sm:py-6 mx-4 sm:mx-0 max-w-md" style={{ boxShadow: '0 8px 40px rgba(3,105,161,0.12)' }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowInfoModal(false)} className="absolute top-3 right-4 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold hover:bg-slate-100 transition-colors" style={{ color: '#64748b' }}>✕</button>
               <h3 className="text-lg font-semibold mb-4" style={{ color: '#0f172a' }}>Data Source</h3>
               <div className="space-y-3">
                 <div><div className="text-[10px] uppercase tracking-wider" style={{ color: '#0369a1' }}>Source</div><div className="text-sm" style={{ color: '#0f172a' }}>{info.source}</div></div>
