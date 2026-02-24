@@ -1036,12 +1036,28 @@ export default function App() {
 
     const varCfg = SNOW_VAR_CONFIG[snowVar]
 
+    // GCS-hosted pre-rendered tiles (fast, no proxy needed)
+    const GCS_TILES = 'https://storage.googleapis.com/snow-tracker-cogs/tiles'
+    const GCS_TILE_SETS: Record<string, string> = {
+      'where-us-snowfall': `${GCS_TILES}/daymet_avg_max_swe/{z}/{x}/{y}.png`,
+      'changing-us-snowfall': `${GCS_TILES}/daymet_snowfall_trend/{z}/{x}/{y}.png`,
+      'shifting-us-snowfall': `${GCS_TILES}/modis_snow_days/{z}/{x}/{y}.png`,
+    }
+
     try {
       let url: string | null = null
 
+      // Try GCS tiles first for supported combos
+      const gcsKey = `${effectiveTab}-${activeLens}-${snowVar}`
+      if (GCS_TILE_SETS[gcsKey]) {
+        await setTileFromUrl(GCS_TILE_SETS[gcsKey], { maxNativeZoom: 7, maxZoom: 12 } as any)
+        if (activeLens === 'us') mapInstanceRef.current.flyTo([39, -98], 4, { duration: 1.5 })
+        setLoading(false)
+        return
+      }
+
       if (effectiveTab === 'where') {
         if (activeLens === 'global') {
-          // Skip local tiles (404s cause console noise) — go straight to GEE proxy
           url = `${GEE_PROXY}/api/snow/tiles/era5?year=2024&month=${String(month).padStart(2,'0')}&band=${varCfg.era5Band}&palette=${colorRamp}`
         } else {
           const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
@@ -1051,7 +1067,6 @@ export default function App() {
       } else if (effectiveTab === 'changing') {
         const startYear = timeRange === '5' ? 2019 : timeRange === '10' ? 2014 : timeRange === '20' ? 2004 : 1980
         if (activeLens === 'global') {
-          // Skip local tiles — go straight to GEE proxy
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
         } else {
           url = `${GEE_PROXY}/api/snow/trends/era5?band=${varCfg.era5Band}&startYear=${startYear}&endYear=2024&month=${month}&metric=trend&palette=${colorRamp}`
