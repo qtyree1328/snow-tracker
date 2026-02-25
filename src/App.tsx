@@ -1191,12 +1191,24 @@ export default function App() {
 
     const varCfg = SNOW_VAR_CONFIG[snowVar]
 
-    // GCS-hosted XYZ tiles (proven working, no CORS issues)
-    const GCS_XYZ = 'https://storage.googleapis.com/snow-tracker-cogs/tiles'
+    // PMTiles on GCS — CORS now configured, range requests work
+    const PM = 'pmtiles://https://storage.googleapis.com/snow-tracker-cogs/pmtiles'
     const GCS_TILE_SETS: Record<string, string> = {
-      'where-us-snowfall': `${GCS_XYZ}/daymet_avg_max_swe/{z}/{x}/{y}.png?v=2`,
-      'changing-us-snowfall': `${GCS_XYZ}/daymet_snowfall_trend/{z}/{x}/{y}.png?v=2`,
-      'shifting-us-snowfall': `${GCS_XYZ}/modis_snow_days/{z}/{x}/{y}.png?v=2`,
+      // Where does it snow?
+      'where-us-snowfall': `${PM}/daymet_avg_max_swe.pmtiles/{z}/{x}/{y}`,
+      'where-us-snow_depth': `${PM}/daymet_avg_max_swe.pmtiles/{z}/{x}/{y}`,
+      'where-global-snowfall': `${PM}/era5_avg_snowfall.pmtiles/{z}/{x}/{y}`,
+      'where-global-snow_depth': `${PM}/era5_avg_snowfall.pmtiles/{z}/{x}/{y}`,
+      // Is snowfall changing?
+      'changing-us-snowfall': `${PM}/daymet_snowfall_trend.pmtiles/{z}/{x}/{y}`,
+      'changing-us-snow_depth': `${PM}/daymet_swe_trend.pmtiles/{z}/{x}/{y}`,
+      'changing-global-snowfall': `${PM}/era5_trend.pmtiles/{z}/{x}/{y}`,
+      'changing-global-snow_depth': `${PM}/era5_trend.pmtiles/{z}/{x}/{y}`,
+      // Season shifting?
+      'shifting-us-snowfall': `${PM}/modis_avg_snow_days.pmtiles/{z}/{x}/{y}`,
+      'shifting-global-snowfall': `${PM}/modis_snow_onset_trend.pmtiles/{z}/{x}/{y}`,
+      // Season
+      'season-us-snowfall': `${PM}/modis_avg_snow_days.pmtiles/{z}/{x}/{y}`,
     }
 
     const t0 = performance.now()
@@ -1212,7 +1224,8 @@ export default function App() {
       const forceGEE = dataSource === 'gee-era5' || dataSource === 'gee-snodas' || dataSource === 'gee-daymet'
 
       if (useGCS && !forceGEE) {
-        sourceLabel = `GCS Tiles (pre-rendered ${gcsKey.includes('modis') ? 'MODIS 500m' : 'Daymet 1km'})`
+        const dataset = gcsKey.includes('era5') ? 'ERA5 11km' : gcsKey.includes('modis') ? 'MODIS 500m' : 'Daymet 1km'
+        sourceLabel = `PMTiles (${dataset})`
         setTileFromUrl(GCS_TILE_SETS[gcsKey], { maxNativeZoom: 7, maxZoom: 12 } as any)
         if (activeLens === 'us') mapInstanceRef.current.flyTo({ center: [-98, 39], zoom: 4, duration: 1500 })
         setTileLoadTime(Math.round(performance.now() - t0))
