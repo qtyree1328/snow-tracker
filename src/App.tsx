@@ -990,14 +990,26 @@ export default function App() {
     clearTileLayer()
     const id = `snow-tile-${++tileIdCounterRef.current}`
     const maxzoom = opts?.maxNativeZoom ?? opts?.maxZoom ?? 12
-    console.log('[TILES] Adding source:', id, 'maxzoom:', maxzoom, 'scheme:', opts?.scheme || 'xyz')
-    map.addSource(id, {
-      type: 'raster',
-      tiles: [tileUrl],
-      tileSize: 256,
-      maxzoom,
-      scheme: opts?.scheme || 'xyz',
-    } as any)
+    const isPMTiles = tileUrl.startsWith('pmtiles://')
+    console.log('[TILES] Adding source:', id, 'maxzoom:', maxzoom, 'isPMTiles:', isPMTiles)
+    if (isPMTiles) {
+      // PMTiles: use `url` (triggers protocol's JSON handler for TileJSON auto-config)
+      // Strip the /{z}/{x}/{y} suffix — protocol adds it automatically
+      const baseUrl = tileUrl.replace(/\/{z}\/{x}\/{y}$/, '')
+      map.addSource(id, {
+        type: 'raster',
+        url: baseUrl,
+        tileSize: 256,
+      } as any)
+    } else {
+      map.addSource(id, {
+        type: 'raster',
+        tiles: [tileUrl],
+        tileSize: 256,
+        maxzoom,
+        scheme: opts?.scheme || 'xyz',
+      } as any)
+    }
     map.addLayer({
       id,
       type: 'raster',
