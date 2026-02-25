@@ -985,14 +985,17 @@ export default function App() {
 
   const setTileFromUrl = useCallback((tileUrl: string, opts?: { opacity?: number; maxZoom?: number; maxNativeZoom?: number; scheme?: 'xyz' | 'tms' }) => {
     const map = mapInstanceRef.current
-    if (!map) return
+    if (!map) { console.warn('[TILES] No map instance'); return }
+    console.log('[TILES] setTileFromUrl called:', tileUrl)
     clearTileLayer()
     const id = `snow-tile-${++tileIdCounterRef.current}`
+    const maxzoom = opts?.maxNativeZoom ?? opts?.maxZoom ?? 12
+    console.log('[TILES] Adding source:', id, 'maxzoom:', maxzoom, 'scheme:', opts?.scheme || 'xyz')
     map.addSource(id, {
       type: 'raster',
       tiles: [tileUrl],
       tileSize: 256,
-      maxzoom: opts?.maxNativeZoom ?? opts?.maxZoom ?? 12,
+      maxzoom,
       scheme: opts?.scheme || 'xyz',
     } as any)
     map.addLayer({
@@ -1002,6 +1005,7 @@ export default function App() {
       paint: { 'raster-opacity': opts?.opacity ?? 0.75 },
     })
     currentTileIdRef.current = id
+    console.log('[TILES] Layer added. Total layers:', map.getStyle().layers.length, 'IDs:', map.getStyle().layers.map((l: any) => l.id))
   }, [])
 
   const clearSnotelMarkers = useCallback(() => {
@@ -1222,6 +1226,7 @@ export default function App() {
       const gcsKey = `${effectiveTab}-${activeLens}-${snowVar}`
       const useGCS = GCS_TILE_SETS[gcsKey] && (dataSource === 'auto' || dataSource === 'gcs')
       const forceGEE = dataSource === 'gee-era5' || dataSource === 'gee-snodas' || dataSource === 'gee-daymet'
+      console.log('[TILES] loadTiles:', { effectiveTab, activeLens, snowVar, gcsKey, useGCS, forceGEE, dataSource })
 
       if (useGCS && !forceGEE) {
         const dataset = gcsKey.includes('era5') ? 'ERA5 11km' : gcsKey.includes('modis') ? 'MODIS 500m' : 'Daymet 1km'
