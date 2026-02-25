@@ -1,3 +1,4 @@
+import DataDashboard from './DataDashboard'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
@@ -409,7 +410,7 @@ const snowCSS = `
 .tab-inactive:hover { color: #0f172a; background: #f1f5f9; }
 
 /* Force dark bg on map container */
-.maplibregl-map { background: #0f172a !important; }
+.maplibregl-map { background: #0f172a !important; width: 100% !important; height: 100% !important; }
 .maplibregl-canvas { outline: none; }
 
 /* ─── Mobile Responsive ─── */
@@ -744,6 +745,7 @@ function getAvailableRamps(tab: string): { key: string; label: string; gradient:
 // ═══════════════════════════════════════════════════════════════════════
 export default function App() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+  const [showDataDashboard, setShowDataDashboard] = useState(false)
   const [activeTab, setActiveTab] = useState<StoryTab>('where')
   const [activeLens, setActiveLens] = useState<Lens>('us')
   const [timeRange, setTimeRange] = useState<TimeRange>('20')
@@ -944,6 +946,7 @@ export default function App() {
     map.on('zoomend', () => setCurrentZoom(Math.round(map.getZoom())))
     map.on('load', () => {
       mapInstanceRef.current = map
+      ;(window as any).__map = map
       setMapReady(true)
     })
     return () => { map.remove() }
@@ -980,7 +983,7 @@ export default function App() {
     currentTileIdRef.current = null
   }, [])
 
-  const setTileFromUrl = useCallback((tileUrl: string, opts?: { opacity?: number; maxZoom?: number; maxNativeZoom?: number }) => {
+  const setTileFromUrl = useCallback((tileUrl: string, opts?: { opacity?: number; maxZoom?: number; maxNativeZoom?: number; scheme?: 'xyz' | 'tms' }) => {
     const map = mapInstanceRef.current
     if (!map) return
     clearTileLayer()
@@ -990,7 +993,8 @@ export default function App() {
       tiles: [tileUrl],
       tileSize: 256,
       maxzoom: opts?.maxNativeZoom ?? opts?.maxZoom ?? 12,
-    })
+      scheme: opts?.scheme || 'xyz',
+    } as any)
     map.addLayer({
       id,
       type: 'raster',
@@ -1190,9 +1194,9 @@ export default function App() {
     // GCS-hosted XYZ tiles (proven working, no CORS issues)
     const GCS_XYZ = 'https://storage.googleapis.com/snow-tracker-cogs/tiles'
     const GCS_TILE_SETS: Record<string, string> = {
-      'where-us-snowfall': `${GCS_XYZ}/daymet_avg_max_swe/{z}/{x}/{y}.png`,
-      'changing-us-snowfall': `${GCS_XYZ}/daymet_snowfall_trend/{z}/{x}/{y}.png`,
-      'shifting-us-snowfall': `${GCS_XYZ}/modis_snow_days/{z}/{x}/{y}.png`,
+      'where-us-snowfall': `${GCS_XYZ}/daymet_avg_max_swe/{z}/{x}/{y}.png?v=2`,
+      'changing-us-snowfall': `${GCS_XYZ}/daymet_snowfall_trend/{z}/{x}/{y}.png?v=2`,
+      'shifting-us-snowfall': `${GCS_XYZ}/modis_snow_days/{z}/{x}/{y}.png?v=2`,
     }
 
     const t0 = performance.now()
@@ -1527,6 +1531,7 @@ export default function App() {
   return (
     <div className="relative w-full h-screen overflow-hidden" style={{ background: '#0f172a' }}>
       <style>{snowCSS}</style>
+      {showDataDashboard && <DataDashboard onClose={() => setShowDataDashboard(false)} />}
 
       {/* ═══ LANDING HERO OVERLAY ═══ */}
       {showHero && (
@@ -1552,7 +1557,9 @@ export default function App() {
       )}
 
       {/* Full-bleed Map */}
-      <div ref={mapRef} className="absolute inset-0 z-0" />
+      <div className="absolute inset-0 z-0">
+        <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      </div>
 
       {/* ═══ MAP UI (hidden during hero) ═══ */}
       {!showHero && (<>
@@ -1592,6 +1599,9 @@ export default function App() {
             <button onClick={() => setShowInfoModal(true)}
               className="snow-panel rounded-full w-9 h-9 flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform cursor-pointer"
               title="Data source info" style={{ color: '#0369a1' }}>i</button>
+            <button onClick={() => setShowDataDashboard(true)}
+              className="snow-panel rounded-xl px-3 h-9 flex items-center justify-center text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
+              title="Data methodology" style={{ color: '#0369a1' }}>Data Methods</button>
             <button onClick={() => setShowAbout(true)}
               className="snow-panel rounded-xl px-3 h-9 flex items-center justify-center text-xs font-semibold hover:scale-105 transition-transform cursor-pointer"
               title="About this project" style={{ color: '#0369a1' }}>About</button>
