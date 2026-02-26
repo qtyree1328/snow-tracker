@@ -1,0 +1,26 @@
+{
+  "Berthoud_Summit_CO": {
+    "station": "335:CO:SNTL",
+    "records": 151,
+    "peak_swe_in": 8.4,
+    "peak_date": "2026-02-25",
+    "current_swe_in": 8.4,
+    "current_date": "2026-02-25"
+  },
+  "Mammoth_Pass_CA": {
+    "station": "574:CA:SNTL",
+    "records": 151,
+    "peak_swe_in": 38.3,
+    "peak_date": "2026-02-25",
+    "current_swe_in": 38.3,
+    "current_date": "2026-02-25"
+  },
+  "Stevens_Pass_WA": {
+    "station": "791:WA:SNTL",
+    "records": 151,
+    "peak_swe_in": 17.5,
+    "peak_date": "2026-02-25",
+    "current_swe_in": 17.5,
+    "current_date": "2026-02-25"
+  }
+}

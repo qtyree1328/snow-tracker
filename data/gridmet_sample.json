@@ -1,0 +1,95 @@
+{
+  "date_range": {
+    "start": "1979-01-01",
+    "end": "2026-02-23"
+  },
+  "bands": [
+    "pr",
+    "rmax",
+    "rmin",
+    "sph",
+    "srad",
+    "th",
+    "tmmn",
+    "tmmx",
+    "vs",
+    "erc",
+    "eto",
+    "bi",
+    "fm100",
+    "fm1000",
+    "etr",
+    "vpd"
+  ],
+  "daily_count_2023": 365,
+  "freezing_days": 275,
+  "estimated_snow_days": 132,
+  "estimated_snowfall_mm": 650.8,
+  "monthly_sample": [
+    {
+      "date": "2023-01-01",
+      "pr_mm": 1.1,
+      "tmmn_K": 266.3
+    },
+    {
+      "date": "2023-01-31",
+      "pr_mm": 0,
+      "tmmn_K": 249.7
+    },
+    {
+      "date": "2023-03-02",
+      "pr_mm": 0,
+      "tmmn_K": 255.7
+    },
+    {
+      "date": "2023-04-01",
+      "pr_mm": 0,
+      "tmmn_K": 259.9
+    },
+    {
+      "date": "2023-05-01",
+      "pr_mm": 0.3,
+      "tmmn_K": 271.1
+    },
+    {
+      "date": "2023-05-31",
+      "pr_mm": 2.3,
+      "tmmn_K": 272.4
+    },
+    {
+      "date": "2023-06-30",
+      "pr_mm": 0,
+      "tmmn_K": 272.9
+    },
+    {
+      "date": "2023-07-30",
+      "pr_mm": 0.6,
+      "tmmn_K": 278.7
+    },
+    {
+      "date": "2023-08-29",
+      "pr_mm": 0,
+      "tmmn_K": 275.7
+    },
+    {
+      "date": "2023-09-28",
+      "pr_mm": 0,
+      "tmmn_K": 274.7
+    },
+    {
+      "date": "2023-10-28",
+      "pr_mm": 37.6,
+      "tmmn_K": 264.3
+    },
+    {
+      "date": "2023-11-27",
+      "pr_mm": 0,
+      "tmmn_K": 254.8
+    },
+    {
+      "date": "2023-12-27",
+      "pr_mm": 0,
+      "tmmn_K": 256.5
+    }
+  ]
+}

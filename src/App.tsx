@@ -1,4 +1,4 @@
-import DataDashboard from './DataDashboard'
+import { DataMethodology } from './DataMethodology'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
@@ -1557,7 +1557,7 @@ export default function App() {
   return (
     <div className="relative w-full h-screen overflow-hidden" style={{ background: '#0f172a' }}>
       <style>{snowCSS}</style>
-      {showDataDashboard && <DataDashboard onClose={() => setShowDataDashboard(false)} />}
+      {showDataDashboard && <DataMethodology onClose={() => setShowDataDashboard(false)} />}
 
       {/* ═══ LANDING HERO OVERLAY ═══ */}
       {showHero && (

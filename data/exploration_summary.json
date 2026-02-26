@@ -1,0 +1,63 @@
+{
+  "run_status": {
+    "SNODAS": "OK",
+    "SNOTEL": "OK",
+    "Daymet V4": "OK",
+    "ERA5-Land": "OK",
+    "MODIS Snow": "OK",
+    "gridMET": "OK"
+  },
+  "datasets": {
+    "SNODAS": {
+      "date_range": "2026-02-24",
+      "bands": [
+        "SWE",
+        "Snow_Depth"
+      ]
+    },
+    "Daymet V4": {
+      "date_range": "1980-01-01 to 2024-12-30",
+      "bands": [
+        "dayl",
+        "prcp",
+        "srad",
+        "swe",
+        "tmax"
+      ]
+    },
+    "ERA5-Land": {
+      "date_range": "1950-02-01 to 2026-01-01",
+      "bands": [
+        "lake_ice_depth",
+        "lake_ice_temperature",
+        "snow_albedo",
+        "snow_cover",
+        "snow_density"
+      ]
+    },
+    "MODIS Snow": {
+      "date_range": "2000-02-24 to 2026-02-23",
+      "bands": [
+        "NDSI_Snow_Cover",
+        "NDSI_Snow_Cover_Class",
+        "NDSI_Snow_Cover_Basic_QA",
+        "NDSI_Snow_Cover_Algorithm_Flags_QA",
+        "NDSI"
+      ]
+    },
+    "SNOTEL": {
+      "date_range": "?",
+      "bands": []
+    },
+    "gridMET": {
+      "date_range": "1979-01-01 to 2026-02-23",
+      "bands": [
+        "pr",
+        "rmax",
+        "rmin",
+        "sph",
+        "srad"
+      ]
+    }
+  }
+}

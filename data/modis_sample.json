@@ -1,0 +1,56 @@
+{
+  "date_range": {
+    "start": "2000-02-24",
+    "end": "2026-02-23"
+  },
+  "bands": [
+    "NDSI_Snow_Cover",
+    "NDSI_Snow_Cover_Class",
+    "NDSI_Snow_Cover_Basic_QA",
+    "NDSI_Snow_Cover_Algorithm_Flags_QA",
+    "NDSI",
+    "Snow_Albedo_Daily_Tile",
+    "Snow_Albedo_Daily_Tile_Class",
+    "orbit_pnt",
+    "granule_pnt"
+  ],
+  "timeseries_2023_count": 168,
+  "timeseries_2023_monthly_sample": [
+    {
+      "date": "2023-01-05",
+      "NDSI": 54
+    },
+    {
+      "date": "2023-04-07",
+      "NDSI": 54
+    },
+    {
+      "date": "2023-07-03",
+      "NDSI": 0
+    },
+    {
+      "date": "2023-08-17",
+      "NDSI": 0
+    },
+    {
+      "date": "2023-10-08",
+      "NDSI": 0
+    },
+    {
+      "date": "2023-11-22",
+      "NDSI": 59
+    }
+  ],
+  "season_2023": {
+    "onset": "2023-01-05",
+    "melt": "2023-12-29",
+    "snow_days": 65
+  },
+  "snow_days_by_year": {
+    "2019": 66,
+    "2020": 73,
+    "2021": 68,
+    "2022": 81,
+    "2023": 65
+  }
+}

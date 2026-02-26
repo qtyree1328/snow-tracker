@@ -1,0 +1,51 @@
+{
+  "latest_date": "2026-02-24",
+  "bands": [
+    "SWE",
+    "Snow_Depth"
+  ],
+  "point_values": {
+    "Rockies": {
+      "SWE": 0.20000000298023224,
+      "Snow_Depth": 0.8029999732971191
+    },
+    "Sierra": {
+      "SWE": 0.44699999690055847,
+      "Snow_Depth": 1.4240000247955322
+    },
+    "Cascades": {
+      "SWE": 0.21899999678134918,
+      "Snow_Depth": 0.9049999713897705
+    },
+    "Great_Lakes": {
+      "error": "Element.toDictionary: Parameter 'element' is required and may not be null."
+    },
+    "Northeast": {
+      "SWE": 0.13199999928474426,
+      "Snow_Depth": 0.5109999775886536
+    }
+  },
+  "rockies_timeseries_count": 147,
+  "rockies_timeseries_sample": [
+    {
+      "date": "2024-10-01",
+      "SWE": 0
+    },
+    {
+      "date": "2024-10-31",
+      "SWE": 0.02800000086426735
+    },
+    {
+      "date": "2024-11-30",
+      "SWE": 0.12999999523162842
+    },
+    {
+      "date": "2024-12-30",
+      "SWE": 0.1720000058412552
+    },
+    {
+      "date": "2025-01-29",
+      "SWE": 0.25
+    }
+  ]
+}
