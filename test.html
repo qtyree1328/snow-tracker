@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PMTiles Test</title>
+  <script src="https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.19.0/dist/maplibre-gl.css"/>
+  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+  <style>body{margin:0}#map{width:100vw;height:100vh}</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+const protocol = new pmtiles.Protocol();
+maplibregl.addProtocol('pmtiles', protocol.tile);
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    sources: {
+      'carto': {
+        type: 'raster',
+        tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
+        tileSize: 256
+      },
+      'snow': {
+        type: 'raster',
+        url: 'pmtiles://https://storage.googleapis.com/snow-tracker-cogs/pmtiles/daymet_avg_max_swe.pmtiles',
+        tileSize: 256
+      }
+    },
+    layers: [
+      { id: 'base', type: 'raster', source: 'carto' },
+      { id: 'snow', type: 'raster', source: 'snow', paint: { 'raster-opacity': 0.8 } }
+    ]
+  },
+  center: [-98, 39],
+  zoom: 4
+});
+map.on('error', e => console.error('MAP ERROR:', e));
+</script>
+</body>
+</html>
